@@ -66,4 +66,8 @@ public class LivestockService {
     public List<LivestockType> getTypes() {
         return LivestockType.getAll();
     }
+
+    public Livestock findByLivestockId(Integer id) {
+        return livestockDAO.findByLivestock_id(id);
+    }
 }

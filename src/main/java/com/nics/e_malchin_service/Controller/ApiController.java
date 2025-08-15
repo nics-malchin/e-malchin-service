@@ -102,8 +102,6 @@ public class ApiController {
         return ResponseEntity.ok(livestockService.getStats());
     }
 
-
-
     @GetMapping("/survey/getAll")
     public ResponseEntity<?> getAllSurvey() {
         return ResponseEntity.ok(surveyService.findSurveysMalchin());
@@ -112,5 +110,10 @@ public class ApiController {
     @GetMapping("/survey/getQuestions")
     public ResponseEntity<?> getAllSurveyAnswer(@RequestParam("surveyId") int surveyId) {
         return ResponseEntity.ok(surveyService.findQuestionsBySurveyId(surveyId));
+    }
+
+    @GetMapping("/livestock/getInfoById")
+    public ResponseEntity<?> getInfoById(@RequestParam("id") int id) {
+        return ResponseEntity.ok(livestockService.findByLivestockId(id));
     }
 }

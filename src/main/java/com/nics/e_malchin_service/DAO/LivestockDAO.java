@@ -18,4 +18,7 @@ public interface LivestockDAO extends JpaRepository<Livestock, Integer> {
 
     @Query("select a from Livestock a where a.type = ?1")
     List<Livestock> findByType(Integer type);
+
+    @Query("select a from Livestock a where a.livestock_id = ?1")
+    Livestock findByLivestock_id(Integer id);
 }

@@ -27,6 +27,11 @@ public class Livestock extends BaseEntity {
     private User user;
 
 
+    private Integer sex;
+    private Integer livestock_id;
+    private Integer parent_id;
+    private Integer have_child;
+    private Integer health_id;
 
 
     @Transient

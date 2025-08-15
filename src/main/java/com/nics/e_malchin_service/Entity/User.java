@@ -29,5 +29,19 @@ public class User extends BaseEntity {
 
     private Integer horshoo_id;
 
+    private Integer is_license_approved;
+
+    private Integer phone_number;
+    private Integer family_id;
+    private Integer aimag_id;
+    private Integer sum_id;
+    private Integer bag_id;
+    private Integer location_description;
+    private Integer herder_count;
+    private Integer family_count;
+
+
+
+
 }
 
