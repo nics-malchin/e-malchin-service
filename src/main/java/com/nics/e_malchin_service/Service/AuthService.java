@@ -10,11 +10,11 @@ import com.nics.e_malchin_service.dto.LoginRequest;
 import com.nics.e_malchin_service.dto.RegistrationRequest;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
@@ -83,15 +83,22 @@ public class AuthService {
 
     @Transactional
     public Map<String, Object> register(RegistrationRequest request) {
+        // Validate
         validateRegistrationRequest(request);
         ensureUsernameAvailable(request.getUsername());
 
+        // Admin token авах
         String adminToken = obtainServiceAccountToken();
         String keycloakUserId = null;
+
         try {
+            // Keycloak-д хэрэглэгч үүсгэх
             keycloakUserId = createKeycloakUser(request, adminToken);
+
+            // Role оноох
             assignRoleToUser(keycloakUserId, request.getRole(), adminToken);
 
+            // Өөрийн домэйн (DB) дотор хадгалах
             Map<String, Object> persisted = persistDomainUser(request);
 
             Map<String, Object> response = new HashMap<>();
@@ -99,18 +106,19 @@ public class AuthService {
             response.put("role", request.getRole());
             response.putAll(persisted);
             return response;
+
         } catch (RuntimeException e) {
+            // Keycloak дээр үүсгэчихээд DB дээр алдаа гарвал цэвэрлэх
             if (keycloakUserId != null) {
                 try {
                     deleteKeycloakUser(keycloakUserId, adminToken);
-                } catch (Exception ignored) {
-                }
+                } catch (Exception ignored) {}
             }
             throw e;
         }
     }
 
-    private void validateRegistrationRequest(RegistrationRequest request) {
+    public void validateRegistrationRequest(RegistrationRequest request) {
         if (!StringUtils.hasText(request.getUsername())) {
             throw new IllegalArgumentException("Username is required");
         }
@@ -122,7 +130,7 @@ public class AuthService {
         }
     }
 
-    private void ensureUsernameAvailable(String username) {
+    public void ensureUsernameAvailable(String username) {
         boolean exists = userDAO.findByUsername(username).isPresent()
                 || bahDAO.findByUsername(username).isPresent()
                 || horshooDAO.findByUsername(username).isPresent();
@@ -131,7 +139,7 @@ public class AuthService {
         }
     }
 
-    private Map<String, Object> persistDomainUser(RegistrationRequest request) {
+    public Map<String, Object> persistDomainUser(RegistrationRequest request) {
         Map<String, Object> response = new HashMap<>();
         String normalizedRole = request.getRole().trim().toLowerCase(Locale.ROOT);
         switch (normalizedRole) {
@@ -189,12 +197,19 @@ public class AuthService {
         body.add("client_id", clientId);
         body.add("client_secret", clientSecret);
 
-        ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, new HttpEntity<>(body, headers), Map.class);
+        ResponseEntity<Map> response = restTemplate.postForEntity(
+                tokenUrl,
+                new HttpEntity<>(body, headers),
+                Map.class
+        );
+
         Map<String, Object> responseBody = Objects.requireNonNull(response.getBody());
         return (String) responseBody.get("access_token");
     }
 
-    private String createKeycloakUser(RegistrationRequest request, String adminToken) {
+
+
+    public String createKeycloakUser(RegistrationRequest request, String adminToken) {
         HttpHeaders headers = createAuthHeaders(adminToken);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -232,7 +247,7 @@ public class AuthService {
         return fetchUserIdByUsername(request.getUsername(), adminToken);
     }
 
-    private void assignRoleToUser(String userId, String role, String adminToken) {
+    public void assignRoleToUser(String userId, String role, String adminToken) {
         HttpHeaders headers = createAuthHeaders(adminToken);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -272,7 +287,7 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalStateException("Failed to retrieve Keycloak user id for " + username));
     }
 
-    private void deleteKeycloakUser(String userId, String adminToken) {
+    public void deleteKeycloakUser(String userId, String adminToken) {
         restTemplate.exchange(
                 getAdminBaseUrl() + "/users/" + userId,
                 HttpMethod.DELETE,
@@ -288,10 +303,10 @@ public class AuthService {
     }
 
     private String getAdminBaseUrl() {
-        return issuerUri.replace("/realms/", "/admin/realms/");
+        return "https://nics-malchin.mn/admin/realms/nics";
     }
 
-    private List<String> extractRoles(String accessToken) {
+    public List<String> extractRoles(String accessToken) {
         if (!StringUtils.hasText(accessToken)) {
             return Collections.emptyList();
         }
