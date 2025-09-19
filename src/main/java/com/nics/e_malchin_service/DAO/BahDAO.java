@@ -5,9 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface BahDAO extends JpaRepository<Bah, Integer> {
 
     @Query("select a from Bah a")
     List<Bah> findAll();
+
+    Optional<Bah> findByUsername(String username);
 }

@@ -4,6 +4,8 @@ import com.nics.e_malchin_service.DAO.LivestockDAO;
 import com.nics.e_malchin_service.DAO.UserDAO;
 import com.nics.e_malchin_service.Entity.Livestock;
 import com.nics.e_malchin_service.Entity.LivestockType;
+import com.nics.e_malchin_service.util.EntityAuditUtil;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,22 +31,59 @@ public class LivestockService {
     }
 
     public Livestock create(Livestock livestock) {
-        livestock.setCreatedBy(1000);
-        livestock.setView("");
-        Double weight = 0.0;
-        livestock.setWeight(weight);
-        livestock.setUser(userDAO.findById(livestock.getUserId()).get());
-
+        livestock.setView(livestock.getView() == null ? "" : livestock.getView());
+        if (livestock.getWeight() == null) {
+            livestock.setWeight(0.0);
+        }
+        if (livestock.getUserId() != null) {
+            livestock.setUser(userDAO.findById(livestock.getUserId())
+                    .orElseThrow(() -> new EntityNotFoundException("User not found with id " + livestock.getUserId())));
+        }
+        EntityAuditUtil.applyCreateAuditValues(livestock);
         return livestockDAO.save(livestock);
     }
 
     @Transactional
     public Livestock update(Livestock updated) {
-        Livestock livestock = livestockDAO.findById(updated.getId()).get();
-        livestock.setCreatedBy(1000);
-        livestock.setAge(updated.getAge());
-        livestock.setType(updated.getType());
-        livestock.setCode(updated.getCode());
+        Livestock livestock = livestockDAO.findById(updated.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Livestock not found with id " + updated.getId()));
+
+        if (updated.getAge() != null) {
+            livestock.setAge(updated.getAge());
+        }
+        if (updated.getType() != null) {
+            livestock.setType(updated.getType());
+        }
+        if (updated.getCode() != null) {
+            livestock.setCode(updated.getCode());
+        }
+        if (updated.getWeight() != null) {
+            livestock.setWeight(updated.getWeight());
+        }
+        if (updated.getView() != null) {
+            livestock.setView(updated.getView());
+        }
+        if (updated.getUserId() != null) {
+            livestock.setUser(userDAO.findById(updated.getUserId())
+                    .orElseThrow(() -> new EntityNotFoundException("User not found with id " + updated.getUserId())));
+        }
+        if (updated.getSex() != null) {
+            livestock.setSex(updated.getSex());
+        }
+        if (updated.getLivestock_id() != null) {
+            livestock.setLivestock_id(updated.getLivestock_id());
+        }
+        if (updated.getParent_id() != null) {
+            livestock.setParent_id(updated.getParent_id());
+        }
+        if (updated.getHave_child() != null) {
+            livestock.setHave_child(updated.getHave_child());
+        }
+        if (updated.getHealth_id() != null) {
+            livestock.setHealth_id(updated.getHealth_id());
+        }
+
+        EntityAuditUtil.applyUpdateAuditValues(livestock, updated.getUpdatedBy());
         return livestockDAO.save(livestock);
     }
 
@@ -69,5 +108,12 @@ public class LivestockService {
 
     public Livestock findByLivestockId(Integer id) {
         return livestockDAO.findByLivestock_id(id);
+    }
+
+    public void delete(Integer id) {
+        if (!livestockDAO.existsById(id)) {
+            throw new EntityNotFoundException("Livestock not found with id " + id);
+        }
+        livestockDAO.deleteById(id);
     }
 }
