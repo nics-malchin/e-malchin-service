@@ -5,9 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface HorshooDAO extends JpaRepository<Horshoo, Integer> {
 
     @Query("select a from Horshoo a")
     List<Horshoo> findAll();
+
+    Optional<Horshoo> findByUsername(String username);
 }
