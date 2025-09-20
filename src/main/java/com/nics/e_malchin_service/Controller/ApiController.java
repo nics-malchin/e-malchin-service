@@ -134,7 +134,6 @@ public class ApiController {
         user.setFirstName(body.get("firstName"));
         user.setLastName(body.get("lastName"));
 
-        // 🔴 Шинээр нэм
         user.setPin(body.get("pin"));
 
         if (body.containsKey("bahId") && body.get("bahId") != null && !body.get("bahId").equals("")) {
@@ -144,7 +143,6 @@ public class ApiController {
             user.setHorshoo_id(Integer.parseInt(body.get("horshooId")));
         }
 
-        // Хэрвээ эдгээрийг ч бас JSON-оос авч хадгалах ёстой бол:
         if (body.containsKey("phone_number")) user.setPhone_number(Integer.parseInt(body.get("phone_number")));
         if (body.containsKey("family_id")) user.setFamily_id(Integer.parseInt(body.get("family_id")));
         if (body.containsKey("aimag_id")) user.setAimag_id(Integer.parseInt(body.get("aimag_id")));

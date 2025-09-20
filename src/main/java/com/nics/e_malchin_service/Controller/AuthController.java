@@ -49,11 +49,9 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token response empty");
             }
 
-            // Access token decode хийж roles гаргаж авах
             String accessToken = (String) tokenResponse.get("access_token");
             List<String> roles = extractRolesFromToken(accessToken);
 
-            // Response дээрээ roles нэмээд буцаана
             tokenResponse.put("roles", roles);
 
             return ResponseEntity.ok(tokenResponse);

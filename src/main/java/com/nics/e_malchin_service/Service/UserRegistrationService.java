@@ -5,6 +5,7 @@ import com.nics.e_malchin_service.Entity.Bah;
 import com.nics.e_malchin_service.Entity.Horshoo;
 import com.nics.e_malchin_service.Entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -12,8 +13,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDate;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,9 +20,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UserRegistrationService {
 
-    private final UserDAO userDAO;
-    private final BahService bahService;
-    private final HorshooService horshooService;
+    @Autowired
+    UserDAO userDAO;
+    @Autowired
+    BahService bahService;
+    @Autowired
+    HorshooService horshooService;
 
     @Value("${keycloak.auth-server-url}")
     private String keycloakServerUrl;

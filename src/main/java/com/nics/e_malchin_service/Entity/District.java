@@ -19,7 +19,4 @@ public class District {
 
     private int city_id;
 
-//    @OneToMany
-//    @JoinColumn(name = "district_id")
-//    private List<Khoroo> khoroos;
 }

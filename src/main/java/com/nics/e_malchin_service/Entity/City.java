@@ -17,7 +17,4 @@ public class City {
 
     private String name;
 
-//    @OneToMany
-//    @JoinColumn(name = "city_id")
-//    private List<District> districts;
 }
