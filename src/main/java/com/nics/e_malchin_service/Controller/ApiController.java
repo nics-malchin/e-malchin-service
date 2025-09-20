@@ -1,9 +1,7 @@
 package com.nics.e_malchin_service.Controller;
 
 import com.nics.e_malchin_service.DAO.UserDAO;
-import com.nics.e_malchin_service.Entity.Livestock;
-import com.nics.e_malchin_service.Entity.LivestockType;
-import com.nics.e_malchin_service.Entity.User;
+import com.nics.e_malchin_service.Entity.*;
 import com.nics.e_malchin_service.Service.BahService;
 import com.nics.e_malchin_service.Service.HorshooService;
 import com.nics.e_malchin_service.Service.LivestockService;
@@ -16,6 +14,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -34,6 +33,8 @@ public class ApiController {
     SurveyService surveyService;
     @Autowired
     UserDAO userDAO;
+    @Autowired
+    UserRegistrationService userRegistrationService;
 
     @GetMapping("/bah/getAll")
     public ResponseEntity<?> getAllBah() {
@@ -45,14 +46,14 @@ public class ApiController {
         return ResponseEntity.ok(horshooService.findAll());
     }
 
-    @GetMapping("/notification/getAll")
-    public ResponseEntity<?> getAllNotification() {
-        return ResponseEntity.ok(notificationService.findAll());
-    }
-
     @GetMapping("/user/getAll")
     public ResponseEntity<?> getAllUser() {
         return ResponseEntity.ok(userService.findAll());
+    }
+
+    @GetMapping("/notification/getAll")
+    public ResponseEntity<?> getAllNotification() {
+        return ResponseEntity.ok(notificationService.findAll());
     }
     @GetMapping("/user/me")
     public ResponseEntity<User> getCurrentUser(@AuthenticationPrincipal Jwt principal) {
@@ -112,8 +113,52 @@ public class ApiController {
         return ResponseEntity.ok(surveyService.findQuestionsBySurveyId(surveyId));
     }
 
+    @PostMapping("/survey/createFull")
+    public ResponseEntity<Survey> createSurveyWithQuestions(@RequestBody Survey survey) {
+        return ResponseEntity.ok(surveyService.createSurveyWithQuestions(survey));
+    }
+
+
+
+
     @GetMapping("/livestock/getInfoById")
     public ResponseEntity<?> getInfoById(@RequestParam("id") int id) {
         return ResponseEntity.ok(livestockService.findByLivestockId(id));
     }
+
+    @PostMapping("/user/register")
+    public ResponseEntity<?> registerUser(@RequestBody Map<String, String> body) {
+        User user = new User();
+        user.setUsername(body.get("username"));
+        user.setPassword(body.get("password"));
+        user.setFirstName(body.get("firstName"));
+        user.setLastName(body.get("lastName"));
+
+        // 🔴 Шинээр нэм
+        user.setPin(body.get("pin"));
+
+        if (body.containsKey("bahId") && body.get("bahId") != null && !body.get("bahId").equals("")) {
+            user.setBah_id(Integer.parseInt(body.get("bahId")));
+        }
+        if (body.containsKey("horshooId") && body.get("horshooId") != null && !body.get("horshooId").equals("" )) {
+            user.setHorshoo_id(Integer.parseInt(body.get("horshooId")));
+        }
+
+        // Хэрвээ эдгээрийг ч бас JSON-оос авч хадгалах ёстой бол:
+        if (body.containsKey("phone_number")) user.setPhone_number(Integer.parseInt(body.get("phone_number")));
+        if (body.containsKey("family_id")) user.setFamily_id(Integer.parseInt(body.get("family_id")));
+        if (body.containsKey("aimag_id")) user.setAimag_id(Integer.parseInt(body.get("aimag_id")));
+        if (body.containsKey("sum_id")) user.setSum_id(Integer.parseInt(body.get("sum_id")));
+        if (body.containsKey("bag_id")) user.setBag_id(Integer.parseInt(body.get("bag_id")));
+        if (body.containsKey("location_description")) user.setLocation_description(Integer.parseInt(body.get("location_description")));
+        if (body.containsKey("herder_count")) user.setHerder_count(Integer.parseInt(body.get("herder_count")));
+        if (body.containsKey("family_count")) user.setFamily_count(Integer.parseInt(body.get("family_count")));
+        if (body.containsKey("is_license_approved")) user.setIs_license_approved(Integer.parseInt(body.get("is_license_approved")));
+
+        String role = body.get("role");
+        User created = userRegistrationService.registerUser(user, role);
+        return ResponseEntity.ok(created);
+    }
+
+
 }

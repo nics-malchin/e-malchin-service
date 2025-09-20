@@ -11,8 +11,12 @@ public class SurveyAnswer extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private Integer question_id;
+    @Column(name = "text")
+    private String answer;
 
-    private String text;
+    @ManyToOne
+    @JoinColumn(name = "question_id", nullable = false)
+    private SurveyQuestion question;
+
 }
 

@@ -11,6 +11,6 @@ public interface SurveyQuestionDAO extends JpaRepository<SurveyQuestion, Integer
     @Query("select a from SurveyQuestion a")
     List<SurveyQuestion> findAll();
 
-    @Query("select a from SurveyQuestion a where a.survey_id = ?1")
+    @Query("select a from SurveyQuestion a where a.survey.id = ?1")
     List<SurveyQuestion> findBySurveyId(int surveyId);
 }

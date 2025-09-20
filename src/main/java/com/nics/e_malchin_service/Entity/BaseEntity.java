@@ -24,4 +24,19 @@ public abstract class BaseEntity {
 
     @Column(name = "updated_by")
     private Integer updatedBy;
+
+    @PrePersist
+    public void prePersist() {
+        if (createdDate == null) {
+            createdDate = LocalDateTime.now();
+        }
+        if (createdBy == null) {
+            createdBy = 1000; // default system user
+        }
+        if (updatedDate == null) {
+            updatedDate = LocalDateTime.now();
+        }
+    }
+
 }
+

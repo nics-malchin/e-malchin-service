@@ -17,10 +17,12 @@ public class SurveyQuestion extends BaseEntity {
 
     private String type;
 
-    private Integer survey_id;
+    @ManyToOne
+    @JoinColumn(name = "survey_id", nullable = false)
+    private Survey survey;
 
-    @OneToMany
-    @JoinColumn(name = "question_id")
-    private List<SurveyAnswer> answer;
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SurveyAnswer> answers;
+
 }
 

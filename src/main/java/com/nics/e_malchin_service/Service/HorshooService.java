@@ -16,4 +16,16 @@ public class HorshooService {
     public List<Horshoo> findAll(){
         return horshooDAO.findAll();
     }
+
+
+    // Horshoo шинээр нэмэх
+    public Horshoo addHorshoo(Horshoo horshoo) {
+        return horshooDAO.save(horshoo);
+    }
+
+    // ID-аар хайх
+    public Horshoo findById(Integer id) {
+        return horshooDAO.findById(id)
+                .orElseThrow(() -> new RuntimeException("Horshoo not found"));
+    }
 }

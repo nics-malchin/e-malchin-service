@@ -23,8 +23,7 @@ public class Survey extends BaseEntity {
 
     private String type;
 
-//    @OneToMany
-//    @JoinColumn(name = "survey_id")
-//    private List<SurveyQuestion> questions;
+    @OneToMany(mappedBy = "survey", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SurveyQuestion> questions;
 }
 

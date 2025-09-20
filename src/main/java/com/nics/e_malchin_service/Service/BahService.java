@@ -3,6 +3,7 @@ package com.nics.e_malchin_service.Service;
 import com.nics.e_malchin_service.DAO.BahDAO;
 import com.nics.e_malchin_service.DAO.LivestockDAO;
 import com.nics.e_malchin_service.Entity.Bah;
+import com.nics.e_malchin_service.Entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,5 +17,17 @@ public class BahService {
 
     public List<Bah> findAll(){
         return bahDAO.findAll();
+    }
+
+
+    // Bah шинээр нэмэх
+    public Bah addBah(Bah bah) {
+        return bahDAO.save(bah);
+    }
+
+    // ID-аар хайх
+    public Bah findById(Integer id) {
+        return bahDAO.findById(id)
+                .orElseThrow(() -> new RuntimeException("Bah not found"));
     }
 }

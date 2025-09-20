@@ -1,5 +1,7 @@
 package com.nics.e_malchin_service.Controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jwt.SignedJWT;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
@@ -7,7 +9,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import java.util.Map;
+
+import java.text.ParseException;
+import java.util.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -39,9 +43,40 @@ public class AuthController {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
-            return ResponseEntity.ok(response.getBody());
+
+            Map<String, Object> tokenResponse = response.getBody();
+            if (tokenResponse == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token response empty");
+            }
+
+            // Access token decode хийж roles гаргаж авах
+            String accessToken = (String) tokenResponse.get("access_token");
+            List<String> roles = extractRolesFromToken(accessToken);
+
+            // Response дээрээ roles нэмээд буцаана
+            tokenResponse.put("roles", roles);
+
+            return ResponseEntity.ok(tokenResponse);
+
         } catch (HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }
+    }
+
+    private List<String> extractRolesFromToken(String token) {
+        try {
+            SignedJWT jwt = SignedJWT.parse(token);
+            Map<String, Object> claims = jwt.getJWTClaimsSet().getClaims();
+
+            Map<String, Object> realmAccess = (Map<String, Object>) claims.get("realm_access");
+            if (realmAccess != null && realmAccess.containsKey("roles")) {
+                return (List<String>) realmAccess.get("roles");
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return Collections.emptyList();
     }
 }
