@@ -14,6 +14,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -68,21 +69,37 @@ public class UserRegistrationService {
         Map<String, Object> kcUser = new HashMap<>();
         kcUser.put("username", user.getUsername());
         kcUser.put("enabled", true);
+        kcUser.put("firstName", user.getFirstName());
+        kcUser.put("lastName", user.getLastName());
+        kcUser.put("email", user.getEmail() != null ? user.getEmail() : user.getUsername() + "@example.com");
+        kcUser.put("emailVerified", true);
 
         Map<String, Object> creds = new HashMap<>();
         creds.put("type", "password");
         creds.put("value", user.getPassword());
         creds.put("temporary", false);
 
-        kcUser.put("credentials", new Object[]{creds});
-        kcUser.put("firstName", user.getFirstName());
-        kcUser.put("lastName", user.getLastName());
+        kcUser.put("credentials", List.of(creds));
 
         HttpEntity<Map<String, Object>> kcRequest = new HttpEntity<>(kcUser, headers);
-        restTemplate.postForEntity(createUserUrl, kcRequest, String.class);
+        ResponseEntity<String> kcResponse = restTemplate.postForEntity(createUserUrl, kcRequest, String.class);
+
+        // 2.1 Шинэ userId авах (Location header-с)
+        String location = kcResponse.getHeaders().getLocation().toString();
+        String userId = location.substring(location.lastIndexOf("/") + 1);
+
+        // 2.2 Role lookup
+        String roleUrl = keycloakServerUrl + "/admin/realms/" + realm + "/roles/" + roleName;
+        ResponseEntity<Map> roleResponse = restTemplate.exchange(
+                roleUrl, HttpMethod.GET, new HttpEntity<>(headers), Map.class);
+        Map<String, Object> role = roleResponse.getBody();
+
+        // 2.3 Role assign
+        String assignRoleUrl = keycloakServerUrl + "/admin/realms/" + realm + "/users/" + userId + "/role-mappings/realm";
+        HttpEntity<List<Map<String, Object>>> roleRequest = new HttpEntity<>(List.of(role), headers);
+        restTemplate.postForEntity(assignRoleUrl, roleRequest, String.class);
 
         // 3. Өөрийн DB-д хадгалах
-
         switch (roleName.toLowerCase()) {
             case "bah" -> {
                 Bah bah = new Bah();
@@ -110,4 +127,5 @@ public class UserRegistrationService {
 
         return user;
     }
+
 }

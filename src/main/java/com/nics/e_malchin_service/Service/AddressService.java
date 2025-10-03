@@ -23,13 +23,27 @@ public class AddressService {
     public List<City> getAllCity(){
         return cityDAO.findAll();
     }
+    public City getCityById(int id){
+        return cityDAO.findById(id)
+                .orElseThrow(() -> new RuntimeException("City not found"));
+    }
 
     public List<District> getAllDistrictByCityId(int cityId){
         return districtDAO.findDistrictsByCity_id(cityId);
     }
 
-    public List<Khoroo> getAllKhoroo(int districtId){
-        return khorooDAO.findKhoroosByDistrict_id(districtId);
+    public District getDistrictById(int id){
+        return districtDAO.findById(id)
+                .orElseThrow(() -> new RuntimeException("District not found"));
+    }
+
+    public List<Khoroo> getAllKhoroo(int cityId, int districtId){
+        return khorooDAO.findKhoroosByCity_idAndDistrict_id(cityId, districtId);
+    }
+
+    public Khoroo getKhorooById(int id){
+        return khorooDAO.findById(id)
+                .orElseThrow(() -> new RuntimeException("Khoroo not found"));
     }
 
 }

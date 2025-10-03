@@ -1,5 +1,7 @@
 package com.nics.e_malchin_service.Entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -18,11 +20,13 @@ public class SurveyQuestion extends BaseEntity {
     private String type;
 
     @ManyToOne
-    @JoinColumn(name = "survey_id", nullable = false)
+    @JoinColumn(name = "survey_id")
+    @JsonIgnore
     private Survey survey;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SurveyAnswer> answers;
 
 }
+
 

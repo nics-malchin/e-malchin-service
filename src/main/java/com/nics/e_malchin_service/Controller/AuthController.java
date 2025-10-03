@@ -52,6 +52,12 @@ public class AuthController {
             String accessToken = (String) tokenResponse.get("access_token");
             List<String> roles = extractRolesFromToken(accessToken);
 
+            Optional<String> role = roles.stream()
+                    .filter(r -> "bah".equals(r) || "malchin".equals(r) || "horshoo".equals(r) || "admin".equals(r))
+                    .findFirst();
+
+            role.ifPresent(s -> tokenResponse.put("role", s));
+
             tokenResponse.put("roles", roles);
 
             return ResponseEntity.ok(tokenResponse);

@@ -26,7 +26,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll() // 🔓 Login хийх хэсэг
+                        .requestMatchers("/auth/**").permitAll()  // 🔓 Login хийх хэсэг
+                        .requestMatchers("/survey/submit").permitAll() // 🔓 Судалгаа бүртгэх
                         .anyRequest().authenticated()            // 🔐 Бусад бүх хүсэлтэнд токен шаардана
                 )
                 .oauth2ResourceServer(oauth -> oauth

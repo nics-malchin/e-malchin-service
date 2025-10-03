@@ -41,6 +41,10 @@ public class User extends BaseEntity {
     private Integer family_count;
 
 
+    @Transient
+    private Integer email;
+    @Transient
+    private Integer role;
 
 
 }

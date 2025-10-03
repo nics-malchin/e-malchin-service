@@ -1,8 +1,6 @@
 package com.nics.e_malchin_service.Service;
 
-import com.nics.e_malchin_service.DAO.SurveyAnswerDAO;
-import com.nics.e_malchin_service.DAO.SurveyDAO;
-import com.nics.e_malchin_service.DAO.SurveyQuestionDAO;
+import com.nics.e_malchin_service.DAO.*;
 import com.nics.e_malchin_service.Entity.Survey;
 import com.nics.e_malchin_service.Entity.SurveyAnswer;
 import com.nics.e_malchin_service.Entity.SurveyQuestion;
@@ -24,9 +22,17 @@ public class SurveyService {
     public List<Survey> findSurveysMalchin(){
         return surveyDAO.findAllByType("malchin");
     }
-    public List<SurveyQuestion> findQuestionsBySurveyId(int surveyId){
-        return surveyquestionDAO.findBySurveyId(surveyId);
+
+    public List<SurveyQuestionDTO> findQuestionsBySurveyId(int surveyId) {
+        List<SurveyQuestion> questions = surveyquestionDAO.findBySurveyId(surveyId);
+        return questions.stream().map(q -> {
+            List<SurveyAnswerDTO> answers = q.getAnswers().stream()
+                    .map(a -> new SurveyAnswerDTO(a.getId(), a.getAnswer()))
+                    .toList();
+            return new SurveyQuestionDTO(q.getId(), q.getQuestion(), q.getType(), answers);
+        }).toList();
     }
+
 
 
 //    public Survey createSurvey(Survey survey) {

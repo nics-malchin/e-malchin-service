@@ -1,11 +1,14 @@
 package com.nics.e_malchin_service.Controller;
 
+import com.nics.e_malchin_service.DAO.SurveyDTO;
 import com.nics.e_malchin_service.DAO.UserDAO;
+import com.nics.e_malchin_service.DAO.UserSignatureDAO;
 import com.nics.e_malchin_service.Entity.*;
 import com.nics.e_malchin_service.Service.BahService;
 import com.nics.e_malchin_service.Service.HorshooService;
 import com.nics.e_malchin_service.Service.LivestockService;
 import com.nics.e_malchin_service.Service.*;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,6 +38,10 @@ public class ApiController {
     UserDAO userDAO;
     @Autowired
     UserRegistrationService userRegistrationService;
+    @Autowired
+    private ModelMapper modelMapper;
+    @Autowired
+    private UserSignatureDAO userSignatureDAO;
 
     @GetMapping("/bah/getAll")
     public ResponseEntity<?> getAllBah() {
@@ -87,6 +94,12 @@ public class ApiController {
         return ResponseEntity.ok(livestockService.create(l));
     }
 
+    @PostMapping("/livestock/register")
+    public ResponseEntity<?> register(@RequestParam Long userId,
+                                      @RequestParam int type,
+                                      @RequestParam int quantity) {
+        return livestockService.registerLivestock(userId, type, quantity);
+    }
     @PostMapping("/livestock/update")
     public ResponseEntity<Livestock> update(@RequestBody Livestock l) {
 
@@ -99,13 +112,19 @@ public class ApiController {
     }
 
     @GetMapping("/livestock/stats")
-    public ResponseEntity<?> getStats() {
-        return ResponseEntity.ok(livestockService.getStats());
+    public ResponseEntity<?> getStats(@RequestParam("userId") int userId) {
+        return ResponseEntity.ok(livestockService.getStats(userId));
     }
 
     @GetMapping("/survey/getAll")
     public ResponseEntity<?> getAllSurvey() {
-        return ResponseEntity.ok(surveyService.findSurveysMalchin());
+        List<Survey> surveys = surveyService.findSurveysMalchin();
+
+        List<SurveyDTO> dto = surveys.stream()
+                .map(s -> modelMapper.map(s, SurveyDTO.class))
+                .toList();
+
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/survey/getQuestions")

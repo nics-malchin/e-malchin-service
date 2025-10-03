@@ -20,12 +20,25 @@ public class AddressController {
     public List<City> getAllCity(){
         return addressService.getAllCity();
     }
+
     @RequestMapping("/getAllDistrict")
     public List<District> getAllDistrict(@RequestParam("cityId") int cityId){
         return addressService.getAllDistrictByCityId(cityId);
     }
     @RequestMapping("/getAllKhoroo")
-    public List<Khoroo> getAllKhoroo(@RequestParam("districtId") int districtId){
-        return addressService.getAllKhoroo(districtId);
+    public List<Khoroo> getAllKhoroo(@RequestParam("cityId") int cityId, @RequestParam("districtId") int districtId){
+        return addressService.getAllKhoroo(cityId, districtId);
+    }
+    @RequestMapping("/getCityById")
+    public City getCityById(@RequestParam("id") int id){
+        return addressService.getCityById(id);
+    }
+    @RequestMapping("/getDistrictById")
+    public District getDistrictById(@RequestParam("id") int id){
+        return addressService.getDistrictById(id);
+    }
+    @RequestMapping("/getKhorooById")
+    public Khoroo getKhorooById(@RequestParam("id") int id){
+        return addressService.getKhorooById(id);
     }
 }
