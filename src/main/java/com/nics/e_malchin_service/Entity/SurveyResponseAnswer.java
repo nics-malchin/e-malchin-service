@@ -15,7 +15,7 @@ public class SurveyResponseAnswer {
     @JoinColumn(name = "response_id")
     private SurveyResponse response;
 
-    @Column(name = "answer_id")
+    @Column(name = "question_id")
     private Long questionId;
 
     @Column(name = "answer_id")
