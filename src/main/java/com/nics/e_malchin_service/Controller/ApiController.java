@@ -94,12 +94,12 @@ public class ApiController {
         return ResponseEntity.ok(livestockService.create(l));
     }
 
-    @PostMapping("/livestock/register")
-    public ResponseEntity<?> register(@RequestParam Long userId,
-                                      @RequestParam int type,
-                                      @RequestParam int quantity) {
-        return livestockService.registerLivestock(userId, type, quantity);
-    }
+//    @PostMapping("/livestock/register")
+//    public ResponseEntity<?> register(@RequestParam Long userId,
+//                                      @RequestParam int type,
+//                                      @RequestParam int quantity) {
+//        return livestockService.registerLivestock(userId, type, quantity);
+//    }
     @PostMapping("/livestock/update")
     public ResponseEntity<Livestock> update(@RequestBody Livestock l) {
 
@@ -136,9 +136,6 @@ public class ApiController {
     public ResponseEntity<Survey> createSurveyWithQuestions(@RequestBody Survey survey) {
         return ResponseEntity.ok(surveyService.createSurveyWithQuestions(survey));
     }
-
-
-
 
     @GetMapping("/livestock/getInfoById")
     public ResponseEntity<?> getInfoById(@RequestParam("id") int id) {
