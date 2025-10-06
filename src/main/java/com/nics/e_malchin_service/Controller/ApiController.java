@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -143,7 +144,10 @@ public class ApiController {
     }
 
     @PostMapping("/user/register")
-    public ResponseEntity<?> registerUser(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> registerUser(@AuthenticationPrincipal Jwt principal, @RequestBody Map<String, String> body) {
+        String username = principal.getClaim("preferred_username");
+        System.out.println("Username: " + username);
+
         User user = new User();
         user.setUsername(body.get("username"));
         user.setPassword(body.get("password"));
@@ -152,11 +156,11 @@ public class ApiController {
 
         user.setPin(body.get("pin"));
 
-        if (body.containsKey("bahId") && body.get("bahId") != null && !body.get("bahId").equals("")) {
-            user.setBah_id(Integer.parseInt(body.get("bahId")));
-        }
-        if (body.containsKey("horshooId") && body.get("horshooId") != null && !body.get("horshooId").equals("" )) {
-            user.setHorshoo_id(Integer.parseInt(body.get("horshooId")));
+
+        Optional<User> bah = userDAO.findByUsername(username);
+        if(bah.isPresent()) {
+            user.setBah_id(bah.get().getBah_id());
+            user.setHorshoo_id(bah.get().getHorshoo_id());
         }
 
         if (body.containsKey("phone_number")) user.setPhone_number(Integer.parseInt(body.get("phone_number")));
@@ -167,12 +171,10 @@ public class ApiController {
         if (body.containsKey("location_description")) user.setLocation_description(Integer.parseInt(body.get("location_description")));
         if (body.containsKey("herder_count")) user.setHerder_count(Integer.parseInt(body.get("herder_count")));
         if (body.containsKey("family_count")) user.setFamily_count(Integer.parseInt(body.get("family_count")));
-        if (body.containsKey("is_license_approved")) user.setIs_license_approved(Integer.parseInt(body.get("is_license_approved")));
+        user.setIs_license_approved(0);
 
         String role = body.get("role");
         User created = userRegistrationService.registerUser(user, role);
         return ResponseEntity.ok(created);
     }
-
-
 }

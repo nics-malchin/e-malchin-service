@@ -118,12 +118,10 @@ public class UserRegistrationService {
                 horshoo.setCreatedBy(1000);
                 horshooService.addHorshoo(horshoo);
             }
-            case "malchin" -> {
-                user.setCreatedBy(1000);
-                userDAO.save(user);
-            }
             default -> throw new RuntimeException("Unknown role: " + roleName);
         }
+        user.setCreatedBy(1000);
+        userDAO.save(user);
 
         return user;
     }
