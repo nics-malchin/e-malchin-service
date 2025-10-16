@@ -171,6 +171,7 @@ public class ApiController {
         if (body.containsKey("location_description")) user.setLocation_description(Integer.parseInt(body.get("location_description")));
         if (body.containsKey("herder_count")) user.setHerder_count(Integer.parseInt(body.get("herder_count")));
         if (body.containsKey("family_count")) user.setFamily_count(Integer.parseInt(body.get("family_count")));
+        if (body.containsKey("email")) user.setFamily_count(Integer.parseInt(body.get("email")));
         user.setIs_license_approved(0);
 
         String role = body.get("role");
