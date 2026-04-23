@@ -1,0 +1,57 @@
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_image:
+        description: "Full API image reference"
+        required: true
+        type: string
+      gui_image:
+        description: "Full GUI image reference"
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, prod]
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Export deploy variables
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -a
+          source /opt/emalchin/env/stack.production.env
+          set +a
+          echo "API_IMAGE=${{ inputs.api_image }}" >> "$GITHUB_ENV"
+          echo "GUI_IMAGE=${{ inputs.gui_image }}" >> "$GITHUB_ENV"
+          echo "API_SERVICE_NAME=${API_SERVICE_NAME}" >> "$GITHUB_ENV"
+          echo "GUI_SERVICE_NAME=${GUI_SERVICE_NAME}" >> "$GITHUB_ENV"
+
+      - name: Update API service
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker service update \
+            --with-registry-auth \
+            --image "${API_IMAGE}" \
+            "${API_SERVICE_NAME}"
+
+      - name: Update GUI service
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker service update \
+            --with-registry-auth \
+            --image "${GUI_IMAGE}" \
+            "${GUI_SERVICE_NAME}"
+
+      - name: Show service status
+        shell: bash
+        run: |
+          docker service ps "${API_SERVICE_NAME}" --no-trunc
+          docker service ps "${GUI_SERVICE_NAME}" --no-trunc

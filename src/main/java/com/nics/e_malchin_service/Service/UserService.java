@@ -16,4 +16,12 @@ public class UserService {
     public List<User> findAll(){
         return userDAO.findAll();
     }
+
+    public void delete(Integer id) {
+        userDAO.deleteById(id);
+    }
+
+    public long count() {
+        return userDAO.count();
+    }
 }

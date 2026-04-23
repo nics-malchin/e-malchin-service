@@ -6,5 +6,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SurveyResponseRepository extends JpaRepository<SurveyResponse, Long> {
-    // Хэрэгтэй бол энд custom query бичиж болно
+
+    boolean existsBySurveyIdAndUserId(Long surveyId, Long userId);
+
+    long countBySurveyId(Long surveyId);
 }

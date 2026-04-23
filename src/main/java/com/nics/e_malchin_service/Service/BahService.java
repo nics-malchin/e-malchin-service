@@ -25,7 +25,19 @@ public class BahService {
         return bahDAO.save(bah);
     }
 
-    // ID-аар хайх
+    public Bah update(Bah updated) {
+        Bah b = bahDAO.findById(updated.getId())
+                .orElseThrow(() -> new RuntimeException("Bah not found: " + updated.getId()));
+        b.setName(updated.getName());
+        b.setUsername(updated.getUsername());
+        b.setHorshoo_id(updated.getHorshoo_id());
+        return bahDAO.save(b);
+    }
+
+    public void delete(Integer id) {
+        bahDAO.deleteById(id);
+    }
+
     public Bah findById(Integer id) {
         return bahDAO.findById(id)
                 .orElseThrow(() -> new RuntimeException("Bah not found"));

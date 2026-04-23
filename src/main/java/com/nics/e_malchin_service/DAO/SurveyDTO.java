@@ -12,5 +12,7 @@ public class SurveyDTO {
     private String description;
     private LocalDate endDate;
     private List<QuestionDTO> questions;
+    private int totalQuestions;
+    private boolean isAnswered;
 }
 

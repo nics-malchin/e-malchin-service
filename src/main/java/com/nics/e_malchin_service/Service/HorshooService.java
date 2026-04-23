@@ -23,7 +23,18 @@ public class HorshooService {
         return horshooDAO.save(horshoo);
     }
 
-    // ID-аар хайх
+    public Horshoo update(Horshoo updated) {
+        Horshoo h = horshooDAO.findById(updated.getId())
+                .orElseThrow(() -> new RuntimeException("Horshoo not found: " + updated.getId()));
+        h.setName(updated.getName());
+        h.setUsername(updated.getUsername());
+        return horshooDAO.save(h);
+    }
+
+    public void delete(Integer id) {
+        horshooDAO.deleteById(id);
+    }
+
     public Horshoo findById(Integer id) {
         return horshooDAO.findById(id)
                 .orElseThrow(() -> new RuntimeException("Horshoo not found"));

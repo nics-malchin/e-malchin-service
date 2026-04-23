@@ -34,19 +34,18 @@ public class LivestockService {
     }
 
     public Livestock create(Livestock livestock) {
-        livestock.setCreatedBy(1000);
+        livestock.setCreatedBy(livestock.getUserId());
         livestock.setView("");
-        Double weight = 0.0;
-        livestock.setWeight(weight);
-        livestock.setUser(userDAO.findById(livestock.getUserId()).get());
-
+        User owner = userDAO.findById(livestock.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found: " + livestock.getUserId()));
+        livestock.setUser(owner);
         return livestockDAO.save(livestock);
     }
 
     @Transactional
     public Livestock update(Livestock updated) {
-        Livestock livestock = livestockDAO.findById(updated.getId()).get();
-        livestock.setCreatedBy(1000);
+        Livestock livestock = livestockDAO.findById(updated.getId())
+                .orElseThrow(() -> new RuntimeException("Livestock not found: " + updated.getId()));
         livestock.setAge(updated.getAge());
         livestock.setType(updated.getType());
         livestock.setCode(updated.getCode());
@@ -70,6 +69,10 @@ public class LivestockService {
         response.put("surveyCount", surveyList.size());
 
         return response;
+    }
+
+    public long getTotalCount() {
+        return livestockDAO.count();
     }
 
     public List<LivestockType> getTypes() {

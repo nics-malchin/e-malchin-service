@@ -58,7 +58,13 @@ public class UserRegistrationService {
         HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(params, headers);
         ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(tokenUrl, tokenRequest, Map.class);
 
+        if (tokenResponse.getBody() == null) {
+            throw new RuntimeException("Keycloak admin token авахад хариу хоосон ирлээ");
+        }
         String accessToken = (String) tokenResponse.getBody().get("access_token");
+        if (accessToken == null) {
+            throw new RuntimeException("Keycloak admin access_token байхгүй байна");
+        }
 
         // 2. Keycloak-д хэрэглэгч үүсгэх
         String createUserUrl = keycloakServerUrl + "/admin/realms/" + realm + "/users";
@@ -85,6 +91,9 @@ public class UserRegistrationService {
         ResponseEntity<String> kcResponse = restTemplate.postForEntity(createUserUrl, kcRequest, String.class);
 
         // 2.1 Шинэ userId авах (Location header-с)
+        if (kcResponse.getHeaders().getLocation() == null) {
+            throw new RuntimeException("Keycloak хэрэглэгч үүсгэхэд Location header байхгүй. Хэрэглэгч аль хэдийн байж магадгүй.");
+        }
         String location = kcResponse.getHeaders().getLocation().toString();
         String userId = location.substring(location.lastIndexOf("/") + 1);
 
@@ -119,6 +128,9 @@ public class UserRegistrationService {
                 horshooService.addHorshoo(horshoo);
             }
             case "malchin" -> {
+            }
+            case "admin" -> {
+                // Admin зөвхөн Keycloak-д үүснэ, local DB-д хадгалахгүй
             }
             default -> throw new RuntimeException("Unknown role: " + roleName);
         }

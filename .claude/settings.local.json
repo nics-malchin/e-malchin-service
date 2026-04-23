@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -X POST \"http://localhost:8080/realms/master/protocol/openid-connect/token\" -H \"Content-Type: application/x-www-form-urlencoded\" -d \"grant_type=password&client_id=admin-cli&username=admin&password=jfdkjdfriFH734eFkg92dek2Rk3\")",
+      "Bash(python -c \"import sys,json; print\\(json.load\\(sys.stdin\\).get\\(''''access_token'''',''''ERROR''''\\)[:50]\\)\")",
+      "Bash(docker ps:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}

@@ -1,0 +1,103 @@
+/* ── NICS Mongolia — Keycloak Login Theme ─────────────────────── */
+/* Overrides the default Keycloak login page to match NICS branding */
+
+/* Background: deep green gradient */
+body.login-pf {
+    background: linear-gradient(145deg, #374837 0%, #2d3d2d 55%, #255746 100%);
+    min-height: 100vh;
+}
+
+/* Header area */
+#kc-header {
+    background: transparent;
+}
+
+#kc-header-wrapper {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 2rem 0 1rem;
+}
+
+/* Login card */
+.login-pf-page .card-pf {
+    border-radius: 12px;
+    border: none;
+    border-top: 3px solid #374837;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+    padding: 2rem 2.5rem 2.5rem;
+    background: #ffffff;
+}
+
+/* Form title */
+#kc-page-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #374837;
+    margin-bottom: 1.5rem;
+}
+
+/* Input fields */
+.login-pf-page .form-control {
+    border-radius: 6px;
+    border: 1px solid #d1d8d5;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.login-pf-page .form-control:focus {
+    border-color: #374837;
+    box-shadow: 0 0 0 3px rgba(14, 66, 58, 0.12);
+    outline: none;
+}
+
+/* Labels */
+.login-pf-page .control-label {
+    font-weight: 500;
+    color: #1c2b1c;
+    font-size: 0.875rem;
+}
+
+/* Primary button */
+.login-pf-page .btn-primary {
+    background-color: #374837 !important;
+    border-color: #374837 !important;
+    border-radius: 6px !important;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.6rem 1.5rem;
+    transition: background-color 0.2s;
+}
+
+.login-pf-page .btn-primary:hover,
+.login-pf-page .btn-primary:focus {
+    background-color: #2d3d2d !important;
+    border-color: #2d3d2d !important;
+}
+
+/* Links */
+.login-pf-page a {
+    color: #2d3d2d;
+}
+
+.login-pf-page a:hover {
+    color: #374837;
+}
+
+/* Alert / error messages */
+.login-pf-page .alert-error {
+    border-radius: 6px;
+}
+
+/* Checkbox (remember me) */
+.login-pf-page .checkbox label {
+    color: #4a6358;
+    font-size: 0.875rem;
+}
+
+/* Footer links */
+#kc-info-message,
+.login-pf-page .instruction {
+    color: #4a6358;
+    font-size: 0.875rem;
+}

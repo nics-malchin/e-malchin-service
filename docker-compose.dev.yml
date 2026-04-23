@@ -1,0 +1,56 @@
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: emalchin_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: dbmaclhin
+      MYSQL_USER: sysmalchin
+      MYSQL_PASSWORD: malchin123
+    ports:
+      - "3308:3306"
+    volumes:
+      - emalchin_mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "sysmalchin", "-pmalchin123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: emalchin_phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: sysmalchin
+      PMA_PASSWORD: malchin123
+    ports:
+      - "8082:80"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    container_name: emalchin_keycloak
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: jfdkjdfriFH734eFkg92dek2Rk3
+    command: start-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - emalchin_keycloak_data:/opt/keycloak/data
+      - ./keycloak-themes:/opt/keycloak/themes
+
+volumes:
+  emalchin_mysql_data:
+  emalchin_keycloak_data:

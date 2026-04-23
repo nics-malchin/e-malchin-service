@@ -1,0 +1,3 @@
+-- Baseline migration for existing production databases.
+-- This file is intentionally empty because current production already contains data.
+-- Add future incremental schema changes in V2__, V3__, ... files.

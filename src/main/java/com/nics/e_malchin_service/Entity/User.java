@@ -42,9 +42,9 @@ public class User extends BaseEntity {
 
 
     @Transient
-    private Integer email;
+    private String email;
     @Transient
-    private Integer role;
+    private String role;
 
 
 }
