@@ -1,103 +1,202 @@
-/* ── NICS Mongolia — Keycloak Login Theme ─────────────────────── */
-/* Overrides the default Keycloak login page to match NICS branding */
-
-/* Background: deep green gradient */
+body.nics-login-body,
 body.login-pf {
-    background: linear-gradient(145deg, #374837 0%, #2d3d2d 55%, #255746 100%);
+    margin: 0;
     min-height: 100vh;
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    background: #1f2b1f;
 }
 
-/* Header area */
-#kc-header {
-    background: transparent;
+.nics-login-layout {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 3rem 10rem 3rem 3rem;
+    overflow: hidden;
 }
 
-#kc-header-wrapper {
-    color: rgba(255, 255, 255, 0.9);
+.nics-login-layout::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url("../img/background.jpg") center center / cover no-repeat;
+    transform: scale(1.01);
+}
+
+.nics-login-layout::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(20, 30, 20, 0.18), rgba(20, 30, 20, 0.08));
+}
+
+.nics-login-card-wrap {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.nics-login-card {
+    width: min(100%, 36rem);
+    padding: 5rem 3rem 2.5rem;
+    border-radius: 53px;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.18);
+}
+
+.nics-login-brand {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.nics-login-brand__logo {
+    height: 12rem;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.nics-login-brand__title {
+    margin-top: 0.5rem;
+    color: #111827;
     font-size: 1.5rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    padding: 2rem 0 1rem;
 }
 
-/* Login card */
-.login-pf-page .card-pf {
-    border-radius: 12px;
-    border: none;
-    border-top: 3px solid #374837;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
-    padding: 2rem 2.5rem 2.5rem;
-    background: #ffffff;
+.nics-login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
 }
 
-/* Form title */
-#kc-page-title {
-    font-size: 1.15rem;
+.nics-field-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.nics-field-label {
+    margin: 0 0 0.6rem 1.25rem;
+    color: #111827;
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+.nics-field-input {
+    width: 100%;
+    padding: 0.95rem 1.1rem;
+    border: 1px solid rgba(17, 24, 39, 0.12);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #111827;
+    font-size: 1rem;
+    outline: none;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.nics-field-input:focus {
+    border-color: #374837;
+    box-shadow: 0 0 0 3px rgba(55, 72, 55, 0.12);
+}
+
+.nics-field-error {
+    margin-top: 0.4rem;
+    color: #b42318;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.nics-login-button {
+    width: 100%;
+    margin-top: 0.25rem;
+    padding: 0.95rem 1.25rem;
+    border: 0;
+    border-radius: 14px;
+    background: #374837;
+    color: #fff;
+    font-size: 1rem;
     font-weight: 700;
-    color: #374837;
+    cursor: pointer;
+}
+
+.nics-login-button:hover {
+    background: #243224;
+}
+
+.nics-login-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin-top: 0.25rem;
     margin-bottom: 1.5rem;
 }
 
-/* Input fields */
-.login-pf-page .form-control {
-    border-radius: 6px;
-    border: 1px solid #d1d8d5;
-    transition: border-color 0.2s, box-shadow 0.2s;
+.nics-login-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #111827;
+    font-size: 0.95rem;
 }
 
-.login-pf-page .form-control:focus {
-    border-color: #374837;
-    box-shadow: 0 0 0 3px rgba(14, 66, 58, 0.12);
-    outline: none;
-}
-
-/* Labels */
-.login-pf-page .control-label {
-    font-weight: 500;
-    color: #1c2b1c;
-    font-size: 0.875rem;
-}
-
-/* Primary button */
-.login-pf-page .btn-primary {
-    background-color: #374837 !important;
-    border-color: #374837 !important;
-    border-radius: 6px !important;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    padding: 0.6rem 1.5rem;
-    transition: background-color 0.2s;
-}
-
-.login-pf-page .btn-primary:hover,
-.login-pf-page .btn-primary:focus {
-    background-color: #2d3d2d !important;
-    border-color: #2d3d2d !important;
-}
-
-/* Links */
-.login-pf-page a {
-    color: #2d3d2d;
-}
-
-.login-pf-page a:hover {
+.nics-login-link {
     color: #374837;
+    text-decoration: none;
+    font-weight: 600;
 }
 
-/* Alert / error messages */
-.login-pf-page .alert-error {
-    border-radius: 6px;
+.nics-login-link:hover {
+    text-decoration: underline;
 }
 
-/* Checkbox (remember me) */
-.login-pf-page .checkbox label {
-    color: #4a6358;
-    font-size: 0.875rem;
+.nics-login-alert {
+    margin-bottom: 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.82);
+    color: #7a271a;
+    font-weight: 600;
 }
 
-/* Footer links */
-#kc-info-message,
-.login-pf-page .instruction {
-    color: #4a6358;
-    font-size: 0.875rem;
+.nics-login-alert--success {
+    color: #05603a;
+}
+
+.nics-login-info {
+    margin-top: 0.5rem;
+    color: #111827;
+    text-align: center;
+}
+
+@media (max-width: 1200px) {
+    .nics-login-layout {
+        padding-right: 4rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .nics-login-layout {
+        justify-content: center;
+        padding: 1.5rem;
+    }
+
+    .nics-login-card {
+        width: 100%;
+        padding: 3rem 1.5rem 2rem;
+        border-radius: 28px;
+    }
+
+    .nics-login-brand__logo {
+        height: 8rem;
+    }
+
+    .nics-login-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }

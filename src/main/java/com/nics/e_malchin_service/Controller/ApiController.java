@@ -243,6 +243,11 @@ public class ApiController {
         return ResponseEntity.ok(zoneService.findAll());
     }
 
+    @GetMapping("/zone/geojson")
+    public ResponseEntity<?> getZonesAsGeoJson(@RequestParam(required = false) String zoneType) {
+        return ResponseEntity.ok(zoneService.toGeoJson(zoneType));
+    }
+
     @PostMapping("/zone/create")
     @PreAuthorize("hasRole('admin')")
     public ResponseEntity<?> createZone(@RequestBody Zone zone) {
@@ -361,6 +366,11 @@ public class ApiController {
     @GetMapping("/soil-survey/getAll")
     public ResponseEntity<?> getAllSoilSurvey() {
         return ResponseEntity.ok(soilSurveyPointService.findAll());
+    }
+
+    @GetMapping("/soil-survey/geojson")
+    public ResponseEntity<?> getSoilSurveyGeoJson() {
+        return ResponseEntity.ok(soilSurveyPointService.toGeoJson());
     }
 
     @PostMapping("/soil-survey/create")
