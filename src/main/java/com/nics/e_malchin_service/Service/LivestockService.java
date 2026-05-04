@@ -33,6 +33,10 @@ public class LivestockService {
         return livestockDAO.findByUserId(id);
     }
 
+    public List<Livestock> getAllLivestock() {
+        return livestockDAO.findAll();
+    }
+
     public Livestock create(Livestock livestock) {
         livestock.setCreatedBy(livestock.getUserId());
         livestock.setView("");
