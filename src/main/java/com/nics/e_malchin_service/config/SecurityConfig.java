@@ -29,6 +29,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/survey/submit").permitAll()
+                        .requestMatchers("/api/tracker/sync",
+                                         "/api/tracker/backfill",
+                                         "/api/tracker/backfill/status").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> oauth
