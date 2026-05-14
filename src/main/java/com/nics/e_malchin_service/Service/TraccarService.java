@@ -1,20 +1,18 @@
 package com.nics.e_malchin_service.Service;
 
+import com.nics.e_malchin_service.Entity.GpsPosition;
+import com.nics.e_malchin_service.repository.GpsPositionRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 public class TraccarService {
@@ -28,17 +26,17 @@ public class TraccarService {
     @Value("${traccar.password}")
     private String traccarPassword;
 
-    @Value("${traccar.log.path:/traccar-logs/tracker-server.log}")
-    private String logPath;
+    private static final DateTimeFormatter ISO_UTC =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    private static final DateTimeFormatter ISO_PLAIN =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final GpsPositionRepository positionRepository;
 
-    // Matches: "2026-05-04 10:48:03  INFO: [...: tk103 < ...] S168#IMEI#...#LOCA:G;...GDATA:A,sats,YYMMDDHHMMSS,lat,lon,speed,heading,alt"
-    private static final Pattern GDATA_PATTERN = Pattern.compile(
-        "(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}).*?#(\\d{15})#.*?GDATA:A,(\\d+),(\\d{12}),([-\\d.]+),([-\\d.]+),(\\d+),(\\d+),(\\d+)"
-    );
-    private static final DateTimeFormatter LOG_TS = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final DateTimeFormatter ISO_UTC = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    public TraccarService(GpsPositionRepository positionRepository) {
+        this.positionRepository = positionRepository;
+    }
 
     private HttpHeaders authHeaders() {
         String credentials = traccarEmail + ":" + traccarPassword;
@@ -51,21 +49,35 @@ public class TraccarService {
 
     public List<?> getDevices() {
         URI uri = UriComponentsBuilder.fromHttpUrl(traccarUrl + "/api/devices").build().toUri();
-        ResponseEntity<List> response = restTemplate.exchange(uri, HttpMethod.GET, new HttpEntity<>(authHeaders()), List.class);
+        ResponseEntity<List> response = restTemplate.exchange(
+                uri, HttpMethod.GET, new HttpEntity<>(authHeaders()), List.class);
         return response.getBody() != null ? response.getBody() : Collections.emptyList();
     }
 
-    public List<?> getLatestPositions() {
+    // Returns latest position per IMEI from NICS DB, falls back to Traccar API if DB is empty
+    public List<Map<String, Object>> getLatestPositions() {
+        List<GpsPosition> dbPositions = positionRepository.findLatestPerImei();
+        if (!dbPositions.isEmpty()) {
+            return toMapList(dbPositions);
+        }
+        // fallback: live call to Traccar
         URI uri = UriComponentsBuilder.fromHttpUrl(traccarUrl + "/api/positions").build().toUri();
-        ResponseEntity<List> response = restTemplate.exchange(uri, HttpMethod.GET, new HttpEntity<>(authHeaders()), List.class);
+        ResponseEntity<List> response = restTemplate.exchange(
+                uri, HttpMethod.GET, new HttpEntity<>(authHeaders()), List.class);
         return response.getBody() != null ? response.getBody() : Collections.emptyList();
     }
 
-    // Resolves deviceId → IMEI by querying Traccar devices, then parses log file for GDATA:A positions
+    // Queries route from NICS DB (populated by GpsPositionSyncService)
     public List<Map<String, Object>> getRoute(Integer deviceId, String from, String to) {
         String imei = resolveImei(deviceId);
         if (imei == null) return Collections.emptyList();
-        return parseLogForPositions(imei, from, to);
+
+        LocalDateTime fromDt = parseDateTime(from);
+        LocalDateTime toDt   = parseDateTime(to);
+
+        List<GpsPosition> positions =
+                positionRepository.findByImeiAndFixTimeBetweenOrderByFixTimeAsc(imei, fromDt, toDt);
+        return toMapList(positions);
     }
 
     @SuppressWarnings("unchecked")
@@ -83,34 +95,28 @@ public class TraccarService {
         return null;
     }
 
-    private List<Map<String, Object>> parseLogForPositions(String imei, String from, String to) {
-        List<Map<String, Object>> positions = new ArrayList<>();
-        LocalDateTime fromDt = LocalDateTime.parse(from, ISO_UTC);
-        LocalDateTime toDt   = LocalDateTime.parse(to,   ISO_UTC);
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(logPath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (!line.contains(imei) || !line.contains("GDATA:A")) continue;
-                Matcher m = GDATA_PATTERN.matcher(line);
-                if (!m.find()) continue;
-
-                LocalDateTime logTime = LocalDateTime.parse(m.group(1), LOG_TS);
-                if (logTime.isBefore(fromDt) || logTime.isAfter(toDt)) continue;
-
-                Map<String, Object> pos = new LinkedHashMap<>();
-                pos.put("fixTime",   logTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z");
-                pos.put("latitude",  Double.parseDouble(m.group(5)));
-                pos.put("longitude", Double.parseDouble(m.group(6)));
-                pos.put("speed",     Double.parseDouble(m.group(7)));
-                pos.put("course",    Double.parseDouble(m.group(8)));
-                pos.put("deviceId",  imei);
-                positions.add(pos);
-            }
-        } catch (Exception e) {
-            System.err.println("TraccarService log parse error: " + e.getMessage());
+    private List<Map<String, Object>> toMapList(List<GpsPosition> positions) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (GpsPosition p : positions) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("fixTime",   p.getFixTime().format(ISO_PLAIN) + "Z");
+            m.put("latitude",  p.getLatitude());
+            m.put("longitude", p.getLongitude());
+            m.put("speed",     p.getSpeed());
+            m.put("course",    p.getCourse());
+            m.put("altitude",  p.getAltitude());
+            m.put("deviceId",  p.getImei());
+            result.add(m);
         }
+        return result;
+    }
 
-        return positions;
+    private LocalDateTime parseDateTime(String dt) {
+        // Accept both "2026-05-01T00:00:00.000Z" and "2026-05-01T00:00:00Z"
+        String normalized = dt.endsWith("Z") ? dt.substring(0, dt.length() - 1) : dt;
+        if (normalized.contains(".")) {
+            normalized = normalized.substring(0, normalized.indexOf('.'));
+        }
+        return LocalDateTime.parse(normalized, ISO_PLAIN);
     }
 }

@@ -5,6 +5,11 @@ services:
     image: ${API_IMAGE}
     env_file:
       - ${APP_ENV_FILE}
+    volumes:
+      - type: bind
+        source: /opt/traccar/logs
+        target: /traccar-logs
+        read_only: true
     networks:
       - app_internal
       - edge
