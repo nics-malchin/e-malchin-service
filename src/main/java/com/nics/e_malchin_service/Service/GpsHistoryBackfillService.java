@@ -140,7 +140,7 @@ public class GpsHistoryBackfillService {
     // Returns count of actually inserted rows (INSERT IGNORE: dup rows return 0)
     private int flushBatch(List<Object[]> batch) {
         int[] results = jdbc.batchUpdate(
-            "INSERT IGNORE INTO nics.gps_position " +
+            "INSERT IGNORE INTO gps_position " +
             "(imei, latitude, longitude, speed, course, altitude, fix_time, synced_at) " +
             "VALUES (?,?,?,?,?,?,?,?)",
             batch
