@@ -1,5 +1,7 @@
 package com.nics.e_malchin_service.Service;
 
+import com.nics.e_malchin_service.DAO.CityDAO;
+import com.nics.e_malchin_service.DAO.DistrictDAO;
 import com.nics.e_malchin_service.DAO.LivestockDAO;
 import com.nics.e_malchin_service.DAO.SurveyDAO;
 import com.nics.e_malchin_service.DAO.UserDAO;
@@ -22,12 +24,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LivestockService {
 
-    @Autowired
-    LivestockDAO livestockDAO;
-    @Autowired
-    UserDAO userDAO;
-    @Autowired
-    private SurveyDAO surveyDAO;
+    @Autowired LivestockDAO livestockDAO;
+    @Autowired UserDAO userDAO;
+    @Autowired CityDAO cityDAO;
+    @Autowired DistrictDAO districtDAO;
+    @Autowired SurveyDAO surveyDAO;
 
     public List<Livestock> getAll(int id) {
         return livestockDAO.findByUserId(id);
@@ -47,18 +48,23 @@ public class LivestockService {
         return livestockDAO.save(livestock);
     }
 
-    // Формат: АА-СС-ББ-МММММ-НННН
-    // АА=аймаг(2), СС=сум(2), ББ=баг(2), МММММ=малчны код(5), НННН=малын дугаар(4)
+    // Формат: AASSNNNNNN (10 оронтой, тасхийм)
+    // АА = city.code (аймаг, 2 оронтой)
+    // СС = district.code (сум, 2 оронтой)
+    // NNNNNN = малын дараалал (6 оронтой, 000001-ээс эхэлнэ)
+    // Жишээ: 1416000001
     private String generateCode(User owner) {
-        String aimag = String.format("%02d", owner.getAimag_id() != null ? owner.getAimag_id() : 0);
-        String sum   = String.format("%02d", owner.getSum_id()   != null ? owner.getSum_id()   : 0);
-        String bag   = String.format("%02d", owner.getBag_id()   != null ? owner.getBag_id()   : 0);
-        String herder = String.format("%05d", owner.getId());
+        String aimag = cityDAO.findById(owner.getAimag_id() != null ? owner.getAimag_id() : 0)
+                .map(c -> String.format("%2s", c.getCode()).replace(' ', '0'))
+                .orElse("00");
+
+        String sum = districtDAO.findById(owner.getSum_id() != null ? owner.getSum_id() : 0)
+                .map(d -> String.format("%2s", d.getCode()).replace(' ', '0'))
+                .orElse("00");
 
         int seq = livestockDAO.findByUserId(owner.getId()).size() + 1;
-        String seqStr = String.format("%04d", seq);
 
-        return aimag + "-" + sum + "-" + bag + "-" + herder + "-" + seqStr;
+        return aimag + sum + String.format("%06d", seq);
     }
 
     @Transactional
