@@ -43,7 +43,22 @@ public class LivestockService {
         User owner = userDAO.findById(livestock.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found: " + livestock.getUserId()));
         livestock.setUser(owner);
+        livestock.setCode(generateCode(owner));
         return livestockDAO.save(livestock);
+    }
+
+    // Формат: АА-СС-ББ-МММММ-НННН
+    // АА=аймаг(2), СС=сум(2), ББ=баг(2), МММММ=малчны код(5), НННН=малын дугаар(4)
+    private String generateCode(User owner) {
+        String aimag = String.format("%02d", owner.getAimag_id() != null ? owner.getAimag_id() : 0);
+        String sum   = String.format("%02d", owner.getSum_id()   != null ? owner.getSum_id()   : 0);
+        String bag   = String.format("%02d", owner.getBag_id()   != null ? owner.getBag_id()   : 0);
+        String herder = String.format("%05d", owner.getId());
+
+        int seq = livestockDAO.findByUserId(owner.getId()).size() + 1;
+        String seqStr = String.format("%04d", seq);
+
+        return aimag + "-" + sum + "-" + bag + "-" + herder + "-" + seqStr;
     }
 
     @Transactional
