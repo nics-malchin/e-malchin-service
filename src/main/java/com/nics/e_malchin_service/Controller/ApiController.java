@@ -197,8 +197,14 @@ public class ApiController {
 //    }
     @PostMapping("/livestock/update")
     public ResponseEntity<Livestock> update(@RequestBody Livestock l) {
-
         return ResponseEntity.ok(livestockService.update(l));
+    }
+
+    @DeleteMapping("/livestock/{id}")
+    @PreAuthorize("hasAnyRole('admin','bah','horshoo')")
+    public ResponseEntity<?> deleteLivestock(@PathVariable Integer id) {
+        livestockService.delete(id);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/livestock/types")

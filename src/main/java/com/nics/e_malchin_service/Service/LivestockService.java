@@ -67,6 +67,10 @@ public class LivestockService {
         return aimag + sum + String.format("%06d", seq);
     }
 
+    public void delete(Integer id) {
+        livestockDAO.deleteById(id);
+    }
+
     @Transactional
     public Livestock update(Livestock updated) {
         Livestock livestock = livestockDAO.findById(updated.getId())
