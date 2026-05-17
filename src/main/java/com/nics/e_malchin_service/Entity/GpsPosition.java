@@ -34,4 +34,12 @@ public class GpsPosition {
 
     @Column(name = "synced_at")
     private LocalDateTime syncedAt;
+
+    private Integer sats;
+
+    @Column(name = "battery_volt")
+    private Double batteryVolt;
+
+    @Column(name = "signal_level")
+    private Integer signalLevel;
 }

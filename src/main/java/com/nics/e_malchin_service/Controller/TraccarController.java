@@ -3,6 +3,8 @@ package com.nics.e_malchin_service.Controller;
 import com.nics.e_malchin_service.Service.GpsHistoryBackfillService;
 import com.nics.e_malchin_service.Service.GpsPositionSyncService;
 import com.nics.e_malchin_service.Service.TraccarService;
+import com.nics.e_malchin_service.Service.TrackerDeviceService;
+import com.nics.e_malchin_service.dto.TrackerDeviceDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,19 +17,43 @@ public class TraccarController {
     private final TraccarService traccarService;
     private final GpsPositionSyncService syncService;
     private final GpsHistoryBackfillService backfillService;
+    private final TrackerDeviceService deviceService;
 
     public TraccarController(TraccarService traccarService,
                              GpsPositionSyncService syncService,
-                             GpsHistoryBackfillService backfillService) {
+                             GpsHistoryBackfillService backfillService,
+                             TrackerDeviceService deviceService) {
         this.traccarService  = traccarService;
         this.syncService     = syncService;
         this.backfillService = backfillService;
+        this.deviceService   = deviceService;
     }
+
+    // ─── Device registry CRUD ────────────────────────────────────────────────
 
     @GetMapping("/devices")
     public ResponseEntity<?> getDevices() {
-        return ResponseEntity.ok(traccarService.getDevices());
+        return ResponseEntity.ok(deviceService.findAll());
     }
+
+    @PostMapping("/devices")
+    public ResponseEntity<?> createDevice(@RequestBody TrackerDeviceDto dto) {
+        return ResponseEntity.ok(deviceService.create(dto));
+    }
+
+    @PutMapping("/devices/{id}")
+    public ResponseEntity<?> updateDevice(@PathVariable Integer id,
+                                          @RequestBody TrackerDeviceDto dto) {
+        return ResponseEntity.ok(deviceService.update(id, dto));
+    }
+
+    @DeleteMapping("/devices/{id}")
+    public ResponseEntity<?> deleteDevice(@PathVariable Integer id) {
+        deviceService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ─── Positions ───────────────────────────────────────────────────────────
 
     @GetMapping("/positions")
     public ResponseEntity<?> getLatestPositions() {
@@ -43,15 +69,14 @@ public class TraccarController {
         return ResponseEntity.ok(traccarService.getRoute(deviceId, from, to));
     }
 
-    // POST /api/tracker/sync — manual incremental sync (log → DB, new entries only)
+    // ─── Sync / backfill ─────────────────────────────────────────────────────
+
     @PostMapping("/sync")
     public ResponseEntity<?> syncNow() {
         int count = syncService.syncFromLog();
         return ResponseEntity.ok(Map.of("synced", count));
     }
 
-    // POST /api/tracker/backfill              — use default log path from config
-    // POST /api/tracker/backfill?logPath=...  — specify a different file (rotated logs)
     @PostMapping("/backfill")
     public ResponseEntity<?> startBackfill(@RequestParam(required = false) String logPath) {
         if (backfillService.isRunning()) {
@@ -59,11 +84,9 @@ public class TraccarController {
                     "progress", backfillService.getProgress()));
         }
         backfillService.startBackfill(logPath);
-        return ResponseEntity.ok(Map.of("status", "started",
-                "message", "백필 시작됨. /api/tracker/backfill/status 에서 진행 상황 확인"));
+        return ResponseEntity.ok(Map.of("status", "started"));
     }
 
-    // GET /api/tracker/backfill/status — check progress or last result
     @GetMapping("/backfill/status")
     public ResponseEntity<?> backfillStatus() {
         return ResponseEntity.ok(Map.of(

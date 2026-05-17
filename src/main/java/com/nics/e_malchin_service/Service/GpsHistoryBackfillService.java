@@ -26,7 +26,10 @@ public class GpsHistoryBackfillService {
     private static final Logger log = LoggerFactory.getLogger(GpsHistoryBackfillService.class);
 
     private static final Pattern GDATA_PATTERN = Pattern.compile(
-        "(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}).*?#(\\d{15})#.*?GDATA:A,(\\d+),(\\d{12}),([-\\d.]+),([-\\d.]+),(\\d+),(\\d+),(\\d+)"
+        "(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}).*?#(\\d{15})#" +
+        ".*?GDATA:A,(\\d+),(\\d{12}),([-\\d.]+),([-\\d.]+),(\\d+),(\\d+),(\\d+)" +
+        "(?:[^\\r\\n]*?BAT:([\\d.]+))?" +
+        "(?:[^\\r\\n]*?SIGNAL:(\\d+))?"
     );
     private static final DateTimeFormatter LOG_TS = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -83,14 +86,17 @@ public class GpsHistoryBackfillService {
                 LocalDateTime fixTime = LocalDateTime.parse(m.group(1), LOG_TS);
 
                 batch.add(new Object[]{
-                    m.group(2),                        // imei
-                    Double.parseDouble(m.group(5)),    // latitude
-                    Double.parseDouble(m.group(6)),    // longitude
-                    Double.parseDouble(m.group(7)),    // speed
-                    Double.parseDouble(m.group(8)),    // course
-                    Double.parseDouble(m.group(9)),    // altitude
-                    fixTime,                           // fix_time
-                    LocalDateTime.now()                // synced_at
+                    m.group(2),                                                        // imei
+                    Double.parseDouble(m.group(5)),                                    // latitude
+                    Double.parseDouble(m.group(6)),                                    // longitude
+                    Double.parseDouble(m.group(7)),                                    // speed
+                    Double.parseDouble(m.group(8)),                                    // course
+                    Double.parseDouble(m.group(9)),                                    // altitude
+                    fixTime,                                                           // fix_time
+                    LocalDateTime.now(),                                               // synced_at
+                    Integer.parseInt(m.group(3)),                                      // sats
+                    m.group(10) != null ? Double.parseDouble(m.group(10)) : null,      // battery_volt
+                    m.group(11) != null ? Integer.parseInt(m.group(11))   : null       // signal_level
                 });
                 parsed.incrementAndGet();
 
@@ -141,8 +147,8 @@ public class GpsHistoryBackfillService {
     private int flushBatch(List<Object[]> batch) {
         int[] results = jdbc.batchUpdate(
             "INSERT IGNORE INTO gps_position " +
-            "(imei, latitude, longitude, speed, course, altitude, fix_time, synced_at) " +
-            "VALUES (?,?,?,?,?,?,?,?)",
+            "(imei, latitude, longitude, speed, course, altitude, fix_time, synced_at, sats, battery_volt, signal_level) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             batch
         );
         return Arrays.stream(results).sum();
