@@ -23,4 +23,7 @@ public interface GpsPositionRepository extends JpaRepository<GpsPosition, Long> 
 
     @Query("SELECT DISTINCT g.imei FROM GpsPosition g ORDER BY g.imei")
     List<String> findDistinctImeis();
+
+    @Query("SELECT MAX(g.fixTime) FROM GpsPosition g")
+    Optional<LocalDateTime> findMaxFixTime();
 }

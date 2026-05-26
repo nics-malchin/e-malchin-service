@@ -79,15 +79,15 @@ public class TraccarService {
         return response.getBody() != null ? response.getBody() : Collections.emptyList();
     }
 
-    public List<Map<String, Object>> getRoute(Integer deviceId, String from, String to) {
-        String imei = resolveImei(deviceId);
-        if (imei == null) return Collections.emptyList();
+    public List<Map<String, Object>> getRoute(Integer deviceId, String imei, String from, String to) {
+        String resolvedImei = (imei != null && !imei.isBlank()) ? imei : resolveImei(deviceId);
+        if (resolvedImei == null) return Collections.emptyList();
 
         LocalDateTime fromDt = parseDateTime(from);
         LocalDateTime toDt   = parseDateTime(to);
 
         List<GpsPosition> positions =
-                positionRepository.findByImeiAndFixTimeBetweenOrderByFixTimeAsc(imei, fromDt, toDt);
+                positionRepository.findByImeiAndFixTimeBetweenOrderByFixTimeAsc(resolvedImei, fromDt, toDt);
         return toMapList(positions);
     }
 

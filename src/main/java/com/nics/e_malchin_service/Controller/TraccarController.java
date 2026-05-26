@@ -1,6 +1,5 @@
 package com.nics.e_malchin_service.Controller;
 
-import com.nics.e_malchin_service.Service.GpsHistoryBackfillService;
 import com.nics.e_malchin_service.Service.GpsPositionSyncService;
 import com.nics.e_malchin_service.Service.TraccarService;
 import com.nics.e_malchin_service.Service.TrackerDeviceService;
@@ -16,17 +15,14 @@ public class TraccarController {
 
     private final TraccarService traccarService;
     private final GpsPositionSyncService syncService;
-    private final GpsHistoryBackfillService backfillService;
     private final TrackerDeviceService deviceService;
 
     public TraccarController(TraccarService traccarService,
                              GpsPositionSyncService syncService,
-                             GpsHistoryBackfillService backfillService,
                              TrackerDeviceService deviceService) {
-        this.traccarService  = traccarService;
-        this.syncService     = syncService;
-        this.backfillService = backfillService;
-        this.deviceService   = deviceService;
+        this.traccarService = traccarService;
+        this.syncService    = syncService;
+        this.deviceService  = deviceService;
     }
 
     // ─── Device registry CRUD ────────────────────────────────────────────────
@@ -60,38 +56,22 @@ public class TraccarController {
         return ResponseEntity.ok(traccarService.getLatestPositions());
     }
 
-    // GET /api/tracker/route?deviceId=4&from=2026-05-01T00:00:00.000Z&to=2026-05-14T23:59:59.000Z
+    // GET /api/tracker/route?deviceId=4&from=...&to=...
+    // GET /api/tracker/route?imei=865412051234567&from=...&to=...  (synthetic / unregistered devices)
     @GetMapping("/route")
     public ResponseEntity<?> getRoute(
-            @RequestParam Integer deviceId,
+            @RequestParam(required = false) Integer deviceId,
+            @RequestParam(required = false) String imei,
             @RequestParam String from,
             @RequestParam String to) {
-        return ResponseEntity.ok(traccarService.getRoute(deviceId, from, to));
+        return ResponseEntity.ok(traccarService.getRoute(deviceId, imei, from, to));
     }
 
-    // ─── Sync / backfill ─────────────────────────────────────────────────────
+    // ─── Manual sync trigger ─────────────────────────────────────────────────
 
     @PostMapping("/sync")
     public ResponseEntity<?> syncNow() {
-        int count = syncService.syncFromLog();
+        int count = syncService.syncFromTraccar();
         return ResponseEntity.ok(Map.of("synced", count));
-    }
-
-    @PostMapping("/backfill")
-    public ResponseEntity<?> startBackfill(@RequestParam(required = false) String logPath) {
-        if (backfillService.isRunning()) {
-            return ResponseEntity.ok(Map.of("status", "already_running",
-                    "progress", backfillService.getProgress()));
-        }
-        backfillService.startBackfill(logPath);
-        return ResponseEntity.ok(Map.of("status", "started"));
-    }
-
-    @GetMapping("/backfill/status")
-    public ResponseEntity<?> backfillStatus() {
-        return ResponseEntity.ok(Map.of(
-                "running",  backfillService.isRunning(),
-                "progress", backfillService.getProgress()
-        ));
     }
 }

@@ -1,0 +1,30 @@
+services:
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: emalchin_backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL:      ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      KEYCLOAK_CLIENT_SECRET:     ${KEYCLOAK_CLIENT_SECRET}
+      KEYCLOAK_ADMIN_USERNAME:    ${KEYCLOAK_ADMIN_USERNAME}
+      KEYCLOAK_ADMIN_PASSWORD:    ${KEYCLOAK_ADMIN_PASSWORD}
+      TRACCAR_URL:                ${TRACCAR_URL}
+      TRACCAR_EMAIL:              ${TRACCAR_EMAIL}
+      TRACCAR_PASSWORD:           ${TRACCAR_PASSWORD}
+      TRACCAR_SYNC_INTERVAL_MS:   ${TRACCAR_SYNC_INTERVAL_MS:-60000}
+      TRACCAR_SYNC_HISTORY_MINUTES: ${TRACCAR_SYNC_HISTORY_MINUTES:-120}
+    ports:
+      - "8081:8081"
+    volumes:
+      - emalchin_uploads:/app/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  emalchin_uploads:
