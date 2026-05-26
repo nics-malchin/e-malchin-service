@@ -243,6 +243,46 @@ public class ApiController {
         return ResponseEntity.ok(surveyService.createSurveyWithQuestions(survey));
     }
 
+    @DeleteMapping("/survey/delete/{id}")
+    @PreAuthorize("hasRole('admin')")
+    public ResponseEntity<?> deleteSurvey(@PathVariable int id) {
+        surveyService.deleteSurvey(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/survey/{id}/responses")
+    public ResponseEntity<?> getSurveyResponses(@PathVariable Long id) {
+        List<SurveyResponse> responses = surveyResponseRepository.findBySurveyId(id);
+        List<Map<String, Object>> result = responses.stream().map(r -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("userId", r.getUserId());
+            String userName = null;
+            try {
+                User u = userDAO.findById(r.getUserId());
+                if (u != null) {
+                    String full = ((u.getLastName() == null ? "" : u.getLastName()) + " "
+                                 + (u.getFirstName() == null ? "" : u.getFirstName())).trim();
+                    userName = full.isEmpty() ? u.getUsername() : full;
+                }
+            } catch (Exception ignored) {}
+            m.put("userName", userName);
+            m.put("createdAt", r.getSubmittedAt());
+            m.put("completed", true);
+            List<Map<String, Object>> ans =
+                (r.getAnswers() == null ? List.<SurveyResponseAnswer>of() : r.getAnswers())
+                    .stream().map(a -> {
+                        Map<String, Object> am = new HashMap<>();
+                        am.put("questionId", a.getQuestionId());
+                        am.put("answerId", a.getAnswerId());
+                        am.put("answer", a.getAnswerText());
+                        return am;
+                    }).toList();
+            m.put("answers", ans);
+            return m;
+        }).toList();
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/livestock/getInfoById")
     public ResponseEntity<?> getInfoById(@RequestParam("id") int id) {
         return ResponseEntity.ok(livestockService.findByLivestockId(id));

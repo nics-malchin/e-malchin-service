@@ -84,5 +84,12 @@ public class SurveyService {
         return surveyDAO.save(survey);
     }
 
+    // Soft-delete: findAll() нь activeFlag = true-г шүүдэг тул флагийг false болгоход л хангалттай.
+    public void deleteSurvey(int id) {
+        surveyDAO.findById(id).ifPresent(s -> {
+            s.setActiveFlag(false);
+            surveyDAO.save(s);
+        });
+    }
 
 }
