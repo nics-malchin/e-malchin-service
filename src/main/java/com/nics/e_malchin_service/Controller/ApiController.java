@@ -10,6 +10,7 @@ import com.nics.e_malchin_service.Service.LivestockService;
 import com.nics.e_malchin_service.Service.*;
 import com.nics.e_malchin_service.dto.AnimalHealthDto;
 import com.nics.e_malchin_service.dto.GpsDeviceDto;
+import com.nics.e_malchin_service.dto.KmzPolygonDto;
 import com.nics.e_malchin_service.dto.LabResultDto;
 import com.nics.e_malchin_service.dto.CertificateDto;
 import com.nics.e_malchin_service.dto.TraceabilityRecordDto;
@@ -22,6 +23,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -318,6 +320,38 @@ public class ApiController {
     public ResponseEntity<?> deleteZone(@PathVariable Integer id) {
         zoneService.delete(id);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Accepts a KMZ or KML file, parses all Polygon placemarks,
+     * and returns the polygon list WITHOUT saving to the database.
+     * The frontend shows a preview dialog; the user then calls batch-create to confirm.
+     */
+    @PostMapping("/zone/parse-kmz")
+    @PreAuthorize("hasRole('admin')")
+    public ResponseEntity<?> parseKmzFile(@RequestParam("file") MultipartFile file) {
+        try {
+            List<KmzPolygonDto> polygons = zoneService.parseKmz(file);
+            return ResponseEntity.ok(polygons);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Файл уншихад алдаа гарлаа: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Saves a list of zones in a single transaction.
+     * Used after the frontend import preview dialog is confirmed.
+     */
+    @PostMapping("/zone/batch-create")
+    @PreAuthorize("hasRole('admin')")
+    public ResponseEntity<?> batchCreateZones(@RequestBody List<Zone> zones) {
+        if (zones == null || zones.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Хадгалах бүс байхгүй байна."));
+        }
+        return ResponseEntity.ok(zoneService.batchCreate(zones));
     }
 
     // ─── AnimalHealth CRUD ───────────────────────────────────────────────────
