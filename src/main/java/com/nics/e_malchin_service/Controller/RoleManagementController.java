@@ -24,24 +24,18 @@ public class RoleManagementController {
 
     // ─── Menu config ─────────────────────────────────────────────────────────
 
-    /** Full config for every role — used by the admin settings UI. */
     @GetMapping("/menu-config")
     @PreAuthorize("hasRole('admin')")
     public ResponseEntity<List<RoleMenuConfigDto>> getAllMenuConfigs() {
         return ResponseEntity.ok(svc.getAllConfigs());
     }
 
-    /**
-     * Returns the union of allowed menu keys for the currently authenticated user.
-     * Called on every login to drive sidebar visibility.
-     */
     @GetMapping("/menu-config/my")
     public ResponseEntity<Set<String>> getMyMenuKeys(@AuthenticationPrincipal Jwt jwt) {
         List<String> roles = extractRoles(jwt);
         return ResponseEntity.ok(svc.getMenuKeysForRoles(roles));
     }
 
-    /** Save (replace) menu-key list for a single role. */
     @PostMapping("/menu-config")
     @PreAuthorize("hasRole('admin')")
     public ResponseEntity<Void> saveMenuConfig(@RequestBody RoleMenuConfigDto dto) {
@@ -49,11 +43,41 @@ public class RoleManagementController {
         return ResponseEntity.ok().build();
     }
 
-    // ─── Role list ────────────────────────────────────────────────────────────
+    // ─── Realm role CRUD ─────────────────────────────────────────────────────
 
+    /** Lists all non-system realm roles from Keycloak. */
     @GetMapping("/roles")
+    @PreAuthorize("hasRole('admin')")
     public ResponseEntity<List<String>> getRoles() {
-        return ResponseEntity.ok(RoleManagementService.KNOWN_ROLES);
+        try {
+            return ResponseEntity.ok(svc.getRealmRoles());
+        } catch (Exception e) {
+            return ResponseEntity.ok(RoleManagementService.KNOWN_ROLES);
+        }
+    }
+
+    /** Creates a new realm role in Keycloak. */
+    @PostMapping("/roles")
+    @PreAuthorize("hasRole('admin')")
+    public ResponseEntity<?> createRole(@RequestBody Map<String, String> body) {
+        try {
+            svc.createRealmRole(body.get("name"));
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /** Deletes a realm role from Keycloak and cleans up menu config. */
+    @DeleteMapping("/roles/{roleName}")
+    @PreAuthorize("hasRole('admin')")
+    public ResponseEntity<?> deleteRole(@PathVariable String roleName) {
+        try {
+            svc.deleteRealmRole(roleName);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     // ─── User management ─────────────────────────────────────────────────────
@@ -68,7 +92,6 @@ public class RoleManagementController {
         }
     }
 
-    /** Replaces all existing realm roles for the given user with the specified role. */
     @PostMapping("/users/assign-role")
     @PreAuthorize("hasRole('admin')")
     public ResponseEntity<?> assignRole(@RequestBody RoleAssignDto dto) {

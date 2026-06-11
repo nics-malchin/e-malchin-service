@@ -22,13 +22,11 @@ import java.util.stream.Collectors;
 public class RoleManagementService {
 
     // ─── Default menu-key → role mapping ────────────────────────────────────
-    // Matches the hardcoded rules in app.menu.ts. Used when no custom DB config
-    // exists for a role yet (first-run fallback).
     private static final Map<String, List<String>> DEFAULT_ROLE_MENUS = Map.of(
         "admin",   List.of("dashboard","livestock","malchin","bah","horshoo","create-user",
                            "survey","zone","animal-health","lab-result","certificate",
                            "traceability","gis-dashboard","gps-device","photo-monitoring",
-                           "soil-survey","role-management"),
+                           "soil-survey","my-documents","role-management"),
         "bah",     List.of("dashboard","livestock","malchin","create-user","animal-health",
                            "lab-result","certificate","traceability","gis-dashboard",
                            "gps-device","photo-monitoring","soil-survey"),
@@ -38,9 +36,15 @@ public class RoleManagementService {
         "factory", List.of("dashboard")
     );
 
-    // Canonical role list (Keycloak realm roles in this project)
+    // Fallback list used when Keycloak is unreachable
     public static final List<String> KNOWN_ROLES =
             List.of("admin","bah","horshoo","malchin","vet","factory");
+
+    // Roles that must never be deleted through this API
+    private static final Set<String> PROTECTED_ROLES = Set.of("admin");
+
+    // Keycloak internal system roles to exclude from the app role list
+    private static final Set<String> SYSTEM_ROLES_EXCLUDE = Set.of("offline_access", "uma_authorization");
 
     @Autowired
     private RoleMenuConfigRepository repo;
@@ -60,11 +64,61 @@ public class RoleManagementService {
     private final RestTemplate rest = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper();
 
+    // ─── Realm role CRUD ─────────────────────────────────────────────────────
+
+    /** Returns all non-system realm roles sorted alphabetically. */
+    @SuppressWarnings("unchecked")
+    public List<String> getRealmRoles() {
+        String token = adminToken();
+        String url = keycloakUrl + "/admin/realms/" + realm + "/roles?max=200";
+        ResponseEntity<List> resp = rest.exchange(url, HttpMethod.GET,
+                new HttpEntity<>(bearerHeaders(token)), List.class);
+        List<Map<String, Object>> roles = resp.getBody() != null ? resp.getBody() : List.of();
+        return roles.stream()
+                .map(r -> (String) r.get("name"))
+                .filter(n -> n != null
+                        && !n.startsWith("default-roles-")
+                        && !SYSTEM_ROLES_EXCLUDE.contains(n))
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+    /** Creates a new realm role in Keycloak. */
+    public void createRealmRole(String roleName) {
+        if (roleName == null || roleName.isBlank()) {
+            throw new IllegalArgumentException("Role name cannot be empty");
+        }
+        String name = roleName.trim().toLowerCase().replaceAll("[^a-z0-9_-]", "-");
+        String token = adminToken();
+        String url = keycloakUrl + "/admin/realms/" + realm + "/roles";
+        rest.postForEntity(url,
+                new HttpEntity<>(Map.of("name", name, "description", ""), bearerHeaders(token)),
+                String.class);
+    }
+
+    /** Deletes a realm role from Keycloak and removes its menu config from DB. */
+    @Transactional
+    public void deleteRealmRole(String roleName) {
+        if (PROTECTED_ROLES.contains(roleName)) {
+            throw new IllegalArgumentException("Cannot delete protected role: " + roleName);
+        }
+        String token = adminToken();
+        String url = keycloakUrl + "/admin/realms/" + realm + "/roles/" + roleName;
+        rest.exchange(url, HttpMethod.DELETE, new HttpEntity<>(bearerHeaders(token)), String.class);
+        repo.deleteByRoleName(roleName);
+    }
+
     // ─── Menu config ─────────────────────────────────────────────────────────
 
-    /** Returns config for ALL known roles (DB config if saved, default otherwise). */
+    /** Returns config for ALL realm roles (DB config if saved, default otherwise). */
     public List<RoleMenuConfigDto> getAllConfigs() {
-        return KNOWN_ROLES.stream()
+        List<String> roles;
+        try {
+            roles = getRealmRoles();
+        } catch (Exception e) {
+            roles = KNOWN_ROLES;
+        }
+        return roles.stream()
                 .map(role -> {
                     List<RoleMenuConfig> rows = repo.findByRoleName(role);
                     RoleMenuConfigDto dto = new RoleMenuConfigDto();
@@ -124,7 +178,7 @@ public class RoleManagementService {
             dto.setFirstName((String) u.getOrDefault("firstName", ""));
             dto.setLastName((String) u.getOrDefault("lastName", ""));
             dto.setEmail((String) u.getOrDefault("email", ""));
-            dto.setRoles(fetchRealmRoles(dto.getId(), token));
+            dto.setRoles(fetchUserRealmRoles(dto.getId(), token));
             return dto;
         }).collect(Collectors.toList());
     }
@@ -132,15 +186,12 @@ public class RoleManagementService {
     /** Assigns a realm role to a Keycloak user, removing all previous realm roles first. */
     public void assignRole(RoleAssignDto dto) {
         String token = adminToken();
-        HttpHeaders hdr = bearerHeaders(token);
 
-        // Remove existing realm roles
-        List<String> current = fetchRealmRoles(dto.getUserId(), token);
+        List<String> current = fetchUserRealmRoles(dto.getUserId(), token);
         for (String roleName : current) {
             removeRole(dto.getUserId(), roleName, token);
         }
 
-        // Assign new role
         if (dto.getRoleName() != null && !dto.getRoleName().isBlank()) {
             addRole(dto.getUserId(), dto.getRoleName(), token);
         }
@@ -149,7 +200,7 @@ public class RoleManagementService {
     // ─── Internal helpers ─────────────────────────────────────────────────────
 
     @SuppressWarnings("unchecked")
-    private List<String> fetchRealmRoles(String userId, String token) {
+    private List<String> fetchUserRealmRoles(String userId, String token) {
         String url = keycloakUrl + "/admin/realms/" + realm + "/users/" + userId + "/role-mappings/realm";
         try {
             ResponseEntity<List> resp = rest.exchange(url, HttpMethod.GET,
@@ -157,7 +208,9 @@ public class RoleManagementService {
             List<Map<String, Object>> roles = resp.getBody() != null ? resp.getBody() : List.of();
             return roles.stream()
                     .map(r -> (String) r.get("name"))
-                    .filter(n -> n != null && KNOWN_ROLES.contains(n))
+                    .filter(n -> n != null
+                            && !n.startsWith("default-roles-")
+                            && !SYSTEM_ROLES_EXCLUDE.contains(n))
                     .collect(Collectors.toList());
         } catch (Exception e) {
             return List.of();

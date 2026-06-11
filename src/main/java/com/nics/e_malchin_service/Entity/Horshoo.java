@@ -1,5 +1,6 @@
 package com.nics.e_malchin_service.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -19,6 +20,7 @@ public class Horshoo extends BaseEntity {
 
     private String password;
 
+    @JsonIgnore
     @OneToMany
     @JoinColumn(name = "horshoo_id")
     private List<Bah> bahList;

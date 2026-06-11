@@ -1,5 +1,6 @@
 package com.nics.e_malchin_service.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -21,6 +22,7 @@ public class Bah extends BaseEntity {
 
     private Integer horshoo_id;
 
+    @JsonIgnore
     @OneToMany
     @JoinColumn(name = "bah_id")
     private List<User> userList;
