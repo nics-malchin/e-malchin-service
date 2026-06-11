@@ -38,6 +38,10 @@ public class BahService {
         bahDAO.deleteById(id);
     }
 
+    public List<Bah> findByHorshooId(Integer horshooId) {
+        return bahDAO.findByHorshoo_id(horshooId);
+    }
+
     public Bah findById(Integer id) {
         return bahDAO.findById(id)
                 .orElseThrow(() -> new RuntimeException("Bah not found"));

@@ -17,6 +17,14 @@ public class UserService {
         return userDAO.findAll();
     }
 
+    public List<User> findByBahId(Integer bahId) {
+        return userDAO.findByBah_id(bahId);
+    }
+
+    public List<User> findByHorshooId(Integer horshooId) {
+        return userDAO.findByHorshoo_id(horshooId);
+    }
+
     public void delete(Integer id) {
         userDAO.deleteById(id);
     }

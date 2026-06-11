@@ -10,4 +10,6 @@ public interface BahDAO extends JpaRepository<Bah, Integer> {
 
     @Query("select a from Bah a")
     List<Bah> findAll();
+
+    List<Bah> findByHorshoo_id(Integer horshooId);
 }

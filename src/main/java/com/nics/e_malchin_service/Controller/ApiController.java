@@ -75,6 +75,24 @@ public class ApiController {
         return ResponseEntity.ok(bahService.findAll());
     }
 
+    /** Horshoo sees only their BAHs; admin sees all. */
+    @GetMapping("/bah/my-bahs")
+    @PreAuthorize("hasAnyRole('admin','horshoo')")
+    public ResponseEntity<?> getMyBahs(@AuthenticationPrincipal Jwt principal,
+                                       org.springframework.security.core.Authentication auth) {
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_admin"));
+        if (isAdmin) {
+            return ResponseEntity.ok(bahService.findAll());
+        }
+        String callerUsername = principal.getClaim("preferred_username");
+        Optional<User> callerOpt = userDAO.findByUsername(callerUsername);
+        if (callerOpt.isEmpty() || callerOpt.get().getHorshoo_id() == null) {
+            return ResponseEntity.ok(List.of());
+        }
+        return ResponseEntity.ok(bahService.findByHorshooId(callerOpt.get().getHorshoo_id()));
+    }
+
     @PostMapping("/bah/create")
     @PreAuthorize("hasAnyRole('admin','horshoo')")
     public ResponseEntity<?> createBah(@RequestBody Bah bah) {
@@ -124,6 +142,41 @@ public class ApiController {
     @PreAuthorize("hasRole('admin')")
     public ResponseEntity<?> getAllUser() {
         return ResponseEntity.ok(userService.findAll());
+    }
+
+    /**
+     * BAH → returns users with matching bah_id.
+     * Horshoo → returns users with matching horshoo_id.
+     * Admin → returns all users.
+     */
+    @GetMapping("/user/my-malchins")
+    @PreAuthorize("hasAnyRole('admin','bah','horshoo')")
+    public ResponseEntity<?> getMyMalchins(@AuthenticationPrincipal Jwt principal,
+                                           org.springframework.security.core.Authentication auth) {
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_admin"));
+        if (isAdmin) {
+            return ResponseEntity.ok(userService.findAll());
+        }
+
+        String callerUsername = principal.getClaim("preferred_username");
+        Optional<User> callerOpt = userDAO.findByUsername(callerUsername);
+        if (callerOpt.isEmpty()) {
+            return ResponseEntity.ok(List.of());
+        }
+        User caller = callerOpt.get();
+
+        boolean isHorshoo = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_horshoo"));
+        if (isHorshoo && caller.getHorshoo_id() != null) {
+            return ResponseEntity.ok(userService.findByHorshooId(caller.getHorshoo_id()));
+        }
+
+        if (caller.getBah_id() != null) {
+            return ResponseEntity.ok(userService.findByBahId(caller.getBah_id()));
+        }
+
+        return ResponseEntity.ok(List.of());
     }
 
     @DeleteMapping("/user/delete/{id}")
@@ -554,11 +607,16 @@ public class ApiController {
         user.setPin(body.get("pin"));
 
 
-        Optional<User> bah = userDAO.findByUsername(username);
-        if(bah.isPresent()) {
-            user.setBah_id(bah.get().getBah_id());
-            user.setHorshoo_id(bah.get().getHorshoo_id());
+        // Auto-inherit bah/horshoo from caller; explicit body values override afterward.
+        Optional<User> caller = userDAO.findByUsername(username);
+        if (caller.isPresent()) {
+            user.setBah_id(caller.get().getBah_id());
+            user.setHorshoo_id(caller.get().getHorshoo_id());
         }
+        if (body.containsKey("bah_id") && !body.get("bah_id").isBlank())
+            user.setBah_id(Integer.parseInt(body.get("bah_id")));
+        if (body.containsKey("horshoo_id") && !body.get("horshoo_id").isBlank())
+            user.setHorshoo_id(Integer.parseInt(body.get("horshoo_id")));
 
         if (body.containsKey("phone_number")) user.setPhone_number(Integer.parseInt(body.get("phone_number")));
         if (body.containsKey("family_id")) user.setFamily_id(Integer.parseInt(body.get("family_id")));
@@ -572,7 +630,8 @@ public class ApiController {
         user.setIs_license_approved(0);
 
         String role = body.get("role");
-        User created = userRegistrationService.registerUser(user, role);
+        String organizationName = body.getOrDefault("organization_name", null);
+        User created = userRegistrationService.registerUser(user, role, organizationName);
         return ResponseEntity.ok(created);
     }
 }

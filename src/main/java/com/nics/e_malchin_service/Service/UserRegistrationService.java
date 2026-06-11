@@ -42,7 +42,7 @@ public class UserRegistrationService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public User registerUser(User user, String roleName) {
+    public User registerUser(User user, String roleName, String organizationName) {
         // 1. Админ access_token авах
         String tokenUrl = keycloakServerUrl + "/realms/master/protocol/openid-connect/token";
 
@@ -117,15 +117,20 @@ public class UserRegistrationService {
                 bah.setPassword(user.getPassword());
                 bah.setHorshoo_id(user.getHorshoo_id());
                 bah.setCreatedBy(1000);
-                bahService.addBah(bah);
+                Bah savedBah = bahService.addBah(bah);
+                user.setBah_id(savedBah.getId());
             }
             case "horshoo" -> {
                 Horshoo horshoo = new Horshoo();
-                horshoo.setName(user.getFirstName() + " " + user.getLastName());
+                String horshooName = (organizationName != null && !organizationName.isBlank())
+                        ? organizationName
+                        : (user.getFirstName() + " " + user.getLastName()).trim();
+                horshoo.setName(horshooName);
                 horshoo.setUsername(user.getUsername());
                 horshoo.setPassword(user.getPassword());
                 horshoo.setCreatedBy(1000);
-                horshooService.addHorshoo(horshoo);
+                Horshoo savedHorshoo = horshooService.addHorshoo(horshoo);
+                user.setHorshoo_id(savedHorshoo.getId());
             }
             case "malchin" -> {
             }

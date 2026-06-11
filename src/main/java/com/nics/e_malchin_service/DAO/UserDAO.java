@@ -18,4 +18,8 @@ public interface UserDAO extends JpaRepository<User, Integer> {
     Optional<User> findByUsername(String username);
 
     User findById(Long userId);
+
+    List<User> findByBah_id(Integer bahId);
+
+    List<User> findByHorshoo_id(Integer horshooId);
 }
