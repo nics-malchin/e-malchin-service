@@ -18,11 +18,11 @@ public class UserService {
     }
 
     public List<User> findByBahId(Integer bahId) {
-        return userDAO.findByBah_id(bahId);
+        return userDAO.findByBahId(bahId);
     }
 
     public List<User> findByHorshooId(Integer horshooId) {
-        return userDAO.findByHorshoo_id(horshooId);
+        return userDAO.findByHorshooId(horshooId);
     }
 
     public void delete(Integer id) {

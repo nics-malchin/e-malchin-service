@@ -39,7 +39,7 @@ public class BahService {
     }
 
     public List<Bah> findByHorshooId(Integer horshooId) {
-        return bahDAO.findByHorshoo_id(horshooId);
+        return bahDAO.findByHorshooId(horshooId);
     }
 
     public Bah findById(Integer id) {
