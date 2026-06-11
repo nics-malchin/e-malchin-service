@@ -4,6 +4,8 @@ import com.nics.e_malchin_service.Service.RoleManagementService;
 import com.nics.e_malchin_service.dto.KeycloakUserDto;
 import com.nics.e_malchin_service.dto.RoleAssignDto;
 import com.nics.e_malchin_service.dto.RoleMenuConfigDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +20,8 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/role-mgmt")
 public class RoleManagementController {
+
+    private static final Logger log = LoggerFactory.getLogger(RoleManagementController.class);
 
     @Autowired
     private RoleManagementService svc;
@@ -88,6 +92,7 @@ public class RoleManagementController {
         try {
             return ResponseEntity.ok(svc.listUsers());
         } catch (Exception e) {
+            log.error("listUsers failed: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }

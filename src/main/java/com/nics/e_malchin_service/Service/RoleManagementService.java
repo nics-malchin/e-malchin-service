@@ -149,6 +149,7 @@ public class RoleManagementService {
     @Transactional
     public void saveConfig(RoleMenuConfigDto dto) {
         repo.deleteByRoleName(dto.getRoleName());
+        repo.flush();
         if (dto.getMenuKeys() != null) {
             for (String key : dto.getMenuKeys()) {
                 RoleMenuConfig row = new RoleMenuConfig();
